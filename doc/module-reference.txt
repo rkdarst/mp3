@@ -19,6 +19,13 @@ cord.py
         natoms()
         frame()
         writedcdfile()
+	settitle()
+	appendtitle()
+	frame()
+	natoms()
+	framen()
+	nframes()
+	
     
         Private:
         _frame
@@ -57,6 +64,9 @@ cordalign.py:
         guess
         scale
         nextframe_end_hook()
+	firstframe
+	curframe
+	iterations
 
 
 
@@ -96,6 +106,9 @@ corddcd.py
         __init__()
         init()
         setdcd()
+	nextframe()
+	read_n_frames()
+	zero_frame()
 
         Private:
         _initted
@@ -120,16 +133,16 @@ cordlesmod.py
 	setatomlist()
 	setleslist()
 	setwhichframe()
+	frame()
 	frames()
-	frames()
-	mean()
-	variance()
-	rmsd()
+	mean()             mean of each atom
+	variance()         variance for each atom
+	rmsd()             rmsd for each atom
 	natoms()
 	nextframe()
 	zero_frame()
 	read_n_frames()
-
+	rep_rmsd()         calculate rmsd for a replicate's atoms
 	
 	Private:
 	__init__()
@@ -274,7 +287,7 @@ labels.py
 	
 
 
-meder.py
+msder.py
     class Msder
         Public:
 	finish_msd_window()
@@ -306,10 +319,11 @@ meder.py
 system.py
     class System:
         Public:
+	atoms_to_use()      for writing pdbs
+	setcord()           
 	writepdbseries()
 	writepdb()
 	writetinkerxyz()
-	atoms_to_use() -- for pdbs
 		
 	Private:
 	__init__()
