@@ -41,10 +41,10 @@ class CordTinkerArc(mp3.cord.Cord):
         for line in file(self._arcfile, "r"):
             number_of_lines += 1
         lines_per_frame = natoms + 1
-        print "nlines", number_of_lines
-        print "lines_per_frame", lines_per_frame
+        #print "nlines", number_of_lines
+        #print "lines_per_frame", lines_per_frame
         nframes = number_of_lines / lines_per_frame
-        print "nframes", nframes
+        #print "nframes", nframes
         self._nframes = nframes
         self._framen = -1
 
