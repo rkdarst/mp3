@@ -1,0 +1,323 @@
+__init__.py
+    Imports everything else.
+
+
+
+General Cord Objects
+    Public:
+        nextframe
+        zero_frame
+        read_n_frames
+
+
+
+cord.py
+    class Cord:
+    
+        Public attributes and methods:
+        nframes()
+        natoms()
+        frame()
+        writedcdfile()
+    
+        Private:
+        _frame
+        _nframes
+        _framen
+        _natoms
+        _writedcd()
+        _bindcd_header()
+        _bindcd_firstheader()
+        _bindcd_titlerecord()
+        _bindcd_natomrecord()
+        _bindcd_frame()
+        
+        Other:
+        _firsttstep
+	firsttstep()
+        _dcdfreq + func
+        _tstep_size + func
+        _block_a + func
+        _block_b + func
+        _charm_v + func
+        _title + func
+
+
+
+cordalign.py:
+    class CordAlign
+    Public:
+        __init__()
+        init()
+        setcord()
+        setatoms()
+    Private:
+        cord
+        atomlist
+        guess
+        scale
+        nextframe_end_hook()
+
+
+
+cordatomslice.py
+    class CordAtomSlice:
+        Public:
+        __init__()
+        init()
+        setcord()
+        setatoms()
+
+        Private:
+        atomlist
+        _natoms
+        cord 
+
+
+
+cordcenterer.py
+    class CordCenterer:
+        Public:
+        __init__()
+        init()
+        setcord()
+        setweights()
+        
+        Private:                     
+        weights
+        cord
+        totalweight
+
+
+
+corddcd.py
+    class CordDcd:
+        Public:
+        __init__()
+        init()
+        setdcd()
+
+        Private:
+        _initted
+        _get_header()
+        _get_next_frame()
+        _framen
+        _frame
+        _fo
+	_parse_header()
+	_parse_title()
+	_parse_atoms()
+
+
+
+corddummy.py
+    ---
+
+cordlesmod.py
+    class CordLESMod: 
+	setcord()
+	setnumrep()
+	setatomlist()
+	setleslist()
+	setwhichframe()
+	frames()
+	frames()
+	mean()
+	variance()
+	rmsd()
+	natoms()
+	nextframe()
+	zero_frame()
+	read_n_frames()
+
+	
+	Private:
+	__init__()
+	_atomlist
+	_calculate_mean()
+	_calculate_natoms()
+	_calculate_rmsd()
+	_calculate_variance()
+	cord
+	_frame
+	_frames
+	_mean
+	_variance
+	_rmsd
+	_leslist
+	_numreplicates
+	_natoms
+	_which_frame
+	
+
+
+cordmerge.py
+    class CordMerge
+        Public:
+        __init__()
+        init()	
+        setcords()
+	
+        private:
+        cords
+        _nframes
+        _framelist
+        _cumulnframes
+        _ncords
+        _natoms
+
+
+
+cordminimage.py
+    class CordMinImage
+        Public:
+        __init__()
+        init()
+        setboxsize()
+        nextframe()
+        nextframe_nowrap()
+
+        Private:
+        _boxsize_callable
+        _wrap_frame
+
+
+
+cordpdb.py
+    class CordPDB
+        Public:
+        init()
+        setpdblist()
+        
+        Private:
+        _natoms
+        _nframes
+        _framen
+        _initted
+        _pdblist
+        _frame
+
+
+
+cordtinkerarc.py
+    class CordTinkerArc:
+        Public:
+        init() -- this is actually used
+	setarc()
+
+	Private:
+	__init__()
+	_initted
+	_nframes
+	_nframen
+	_natoms
+	_arcfile
+	
+    
+
+cordtinkerxyz.py
+    class CordTinkerXYZ:
+        Public:
+        init() -- this is actually used
+	setxyzlist()
+
+	Private:
+	__init__()
+	_initted
+	_nframes
+	_nframen
+	_natoms
+	_xyzlist
+
+
+
+cordtransform.py
+    class CordTransform
+        Public:
+        init()
+	setcord()
+	settransformation()
+	gettransformation()	
+
+        Private:
+	__init__()
+	_move
+	_rotate
+	cord
+
+
+
+functions.py
+    pdbsystem()
+    rmsd()
+    cordtransform()
+    tinkeratomreplace()
+    _atomlist_to_leslist()
+
+
+labels.py
+    class Labels()
+        Public:
+	getfrompsf()
+	getfrompdb()
+	getfromtxyz()
+	findatoms()
+
+        Private:
+	_makedataarray()
+	_makebondlist()
+	_parsepsf()
+	_parsepdb()
+	_parsetinkerxyz()
+	natoms
+	data
+	
+
+
+meder.py
+    class Msder
+        Public:
+	finish_msd_window()
+	do_n_msd()
+	do_all_msd()
+	msd()
+	write_msdlist()
+	set_timeunit()
+	set_distanceunit()
+	find_diffusion_constant()
+	find_diffusion_constant_in_units()
+
+        Private:
+	__init__()
+	_append_frame()
+	_advance_frame()
+	_one_msdrun()
+	_time_unit
+	_distance_unit
+	cord
+	window
+	atomlist
+	framelist
+	_msd_sum
+	_count_sum
+
+
+
+system.py
+    class System:
+        Public:
+	writepdbseries()
+	writepdb()
+	writetinkerxyz()
+	atoms_to_use() -- for pdbs
+		
+	Private:
+	__init__()
+	__getattr__() -- interface to .labels and .cord
+        _writepdbseq()
+	_pdbframe()
+	_pdbline()
+	_pdbline_broke1()
+
+
+

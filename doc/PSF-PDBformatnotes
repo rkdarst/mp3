@@ -1,0 +1,20 @@
+RCSB[1] specifies that the residue name field has three spaces, but 
+some residues in PSFs I use take up four spaces, VMD[2] can handle four-
+byte fields. 
+
+residue name is supposed to be from columns 18-20.  Column 21 is in 
+dispute.  However, column 21 is not reserved for anything else, 
+according to [1].  
+
+My solution:  I will have it read columns 18-21 and use them all.
+Whitespace is stripped from the beginning and end, so this will not
+affect correct PDBs.  When I write out PDBs, I will print four fields,
+but it will be left-aligned so it will only use the disputed column if
+what was read in originally had too-long resnames.  
+
+... more complicated than I thought...
+
+
+[1] http://www.rcsb.org/pdb/docs/format/pdbguide2.2/part_62.html
+[2] http://www.ks.uiuc.edu/Research/vmd/
+

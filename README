@@ -1,0 +1,17 @@
+
+
+WARNING: when saving a copy of dcd.frame (or any frame object), use
+savedframe = self.frame.copy() !!!  Numarray is smart enough to just
+make a reference to the original one, and when I update the frame, it
+updates it in-place, so your saved copy will change, too.
+
+>>> a=mp3.dcd()
+>>> a.nextframe()
+>>> saved_frame = a.frame
+>>> a.nextframe()
+>>> id(a.frame)
+136382236
+>>> id(saved_frame)
+136382236
+
+use saved_frame = self.frame.copy() to make this work.

@@ -1,0 +1,9 @@
+include src/scripts/*.py
+include doc/*
+exclude doc/*~
+include CHANGELOG
+include tests/water1000.dcd
+include tests/water1000.psf
+include tests/*test.py
+
+

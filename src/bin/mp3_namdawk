@@ -1,0 +1,154 @@
+#!/usr/bin/python
+import optparse, fileinput, numarray.strings, string, os, sys, re
+
+#outputhandler = "xmgrace"
+outputhandler = "stdout"
+
+###
+###  Set-up
+###
+
+usage = """%s 'field-name[ ...]' [input-file [...]]
+
+Read named NAMD output files, or stdin.  Match 'field-name's (as regex'es)
+against a list of field names.  Print out those fields to stdout, or
+xmgrace.  """%(sys.argv[0])
+
+parser = optparse.OptionParser(usage)
+parser.add_option("-x", "--xmgrace", action='store_true', dest='xmgrace',
+                  help="Output to xmgrace (default)")
+parser.add_option("-o", "--stdout", action="store_true", dest='stdout',
+                  help="Output to stdout")
+parser.add_option("-n", "--noout", action="store_true", dest='noout',
+                  help="No output")
+parser.add_option("--fields", action="store_true", dest="print_fields",
+                  help="show what the fields are, and how matching works")
+parser.add_option("-v", "--version", action="store_true", dest="version",
+                  help="known bugs and how to call the exterminator")
+options, args = parser.parse_args()
+
+if len(args) < 2:
+    print "Not enough arguments given"
+    sys.exit
+    
+namd_fields = ["etitle",
+             "ts",
+             "bond",
+             "angle",
+             "dihed",
+             "imprp",
+             "elect",
+             "vdw",
+             "boundry",
+             "misc",
+             "kinetic",
+             "total",
+             "temp",
+             "total2",
+             "total3",
+             "tempavg",
+             "pressure",
+             "gpressure",
+             "volume",
+             "pressavg",
+             "gpressavg" ]
+
+if options.print_fields != None:
+    print "We know of these fields:"
+    print ""
+    print namd_fields
+    print ""
+    print "We match your field selections against each of these, starting"
+    print "at the beginning of the list, until one matches with a"
+    print "case-insensitive seach. Regular expressions should be supported."
+    print "There is an implicit ^ at the beginning of each regex. The fields"
+    print "outputed are the ones you enter, in the order you enter them,"
+    print "regardless of duplication or the actual input order."
+    sys.exit()
+if options.version != None:
+    print "namdawk.py  0.0"
+    print ""
+    print "Richard Darst  --  ten.bigz@dkr"
+    print "Many bugs, but I'll wait for you to tell them to me"
+    print ""
+    print "report new bugs to the email address which is written backwards above"
+    sys.exit()
+###
+###  Find out what we are trying to print
+###
+    
+inputs = fileinput.input(args[1:])
+
+given_fields = args[0].split()
+
+def findmatch(list, name):
+#    print name
+    rex = re.compile(name, re.I)
+    for i in range(0,len(list)):
+        if rex.match(list[i]) != None:
+            return i
+    return None
+fields = []
+#print given_fields
+for fieldname in given_fields:
+    tmp = findmatch(namd_fields, fieldname)
+    if tmp != None:
+        fields.append(tmp)
+#print fields
+
+###
+### Set up where we will write it to:
+###
+
+#decide how to deal with the data.
+if options.stdout != None:
+    outputhandler = "stdout"
+if options.xmgrace != None:
+    outputhandler = "xmgrace"
+if options.noout != None:
+    outputhandler = "noout"
+
+if outputhandler == 'stdout':
+    def stdout(line):
+        print line
+    output = stdout
+if outputhandler == 'noout':
+    def nullfunc(line):
+        pass
+    output = nullfunc
+
+if outputhandler == 'xmgrace':
+    class grace:
+        def __init__(self):
+            self.grace = os.popen("xmgrace -nxy -", "w")
+        def __call__(self,line):
+            #        print line
+            self.grace.write(line+'\n')
+    output = grace()
+
+time = 0
+time_in_file = 0
+restart = 0   # 0=go normally, 1=waiting for first line,
+                       #2=waiting for second line.
+interval = -1  
+for line in inputs:
+    if line[0:8] != 'ENERGY: ':
+        continue
+    line = line.split()
+    if int(line[1]) != time_in_file+interval and restart == 0:   
+        restart = 2
+        time_in_file = int(line[1])
+        continue
+    if restart == 2:
+        interval = int(line[1]) - time_in_file
+        restart = 0
+    time += interval
+    time_in_file += interval
+    line[1] = str(time)
+    line = [ line[i] for i in fields ]
+    line = string.join(list(line),(' '))
+    output(line)
+    
+
+    
+    

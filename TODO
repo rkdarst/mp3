@@ -1,0 +1,9 @@
+optimise system.writepdb some-- make fancier string joining methods.
+
+Tools for controlling what the titles of cords are.  -- dcd title records.
+
+correct the way of storing cord meta-data (dcdfreq, tstep_size, etc.)
+
+fix read_n_frames in CordMerge
+
+rework minimage.py

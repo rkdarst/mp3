@@ -1,0 +1,168 @@
+#!/usr/bin/env python
+# 
+# This Program should accept dcds on the command line, and verify that they are in the proper format.
+# 
+# 
+# 
+#from dcdp import thelog
+import os, logging, sys, struct
+from struct import unpack
+#import mp3 as dcdp
+import mp3
+
+logging.addLevelName(17,'details')
+log = logging.getLogger('verify')
+log.addHandler(logging.StreamHandler(sys.stdout))
+
+
+def main():
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("--little", "-l", action='store_const', const='little', dest='byteorder',
+                      help="Use little-endian byte order")
+    parser.add_option("--big", "-b", action='store_const', const='big',  dest='byteorder',
+                      help="Use big-endian byte order", default=sys.byteorder)
+    parser.add_option("--only-header", "-o", action='store_true', dest='only_header',
+                      help="Only verify header and total size (faster)", default=False)
+    parser.add_option("--quiet", "-q", action='count', dest='quietness',
+                      help="Less information (incremental)", default=0)
+    parser.add_option("--verbose", "-v", action='count', dest='verbosity',
+                      help="More information (incremental)", default=0)
+    global options
+    (options, args) = parser.parse_args()
+
+    
+    # set verbosity
+    # mapping of the input values that we need:    
+    # info: 20 -> 20   (default)
+    # details 10 -> 17
+    # debug 0(or less) -> 10
+    loglevel = 10*((options.quietness-options.verbosity)+2)
+    if loglevel <= 0:
+        loglevel = 10
+    elif loglevel == 10:
+        loglevel = 17
+    log.setLevel(loglevel)
+
+
+    for filename in args:
+        verifydcd(filename)
+
+
+def verifydcd(filename):
+    log.info("\nProcessing dcd: %s "%filename)
+
+    #open it
+    dcdfo = file(filename, 'rb')
+
+    #check the endianness of the first byte
+    first_byte = dcdfo.read(4)
+    little84 = 'T\x00\x00\x00'
+    big84 = '\x00\x00\x00T'
+    if struct.unpack(bo('i'), first_byte) == ( 84,):
+        log.log(17, "This DCD seems to be %s-endian" %options.byteorder)
+        pass
+    elif first_byte == little84:
+        log.critical("*** The first byte is wrong, but if the file was made on a little-endian machine, it would be right. Look at the --little option. ")
+    elif first_byte == big84:
+        log.critical("*** The first byte is wrong, but if the file was made on a big-endian machine, it would be right. Look at the --big option. ")
+    else:
+        log.critical("*** From looking at the first byte, I can't tell if this is a DCD or not.")
+        log.critical("    My sources say that a DCD should start with the integer '84'")
+        
+    #read the rest of the first header
+    dcdfo.read(84)
+    byte = dcdfo.read(4)
+    if unpack(bo('i'), byte) != (84, ):
+        log.error("*** first block ending blocksize is not 84 ")
+
+    #manage the title field
+    byte, ntitle = unpack(bo('ii'), dcdfo.read(8))
+    if byte - 4 - 80*ntitle != 0:
+        log.error("*** first title record size doesn't match what comes from the title size")
+    dcdfo.read(80*ntitle)
+    if unpack(bo('i'),dcdfo.read(4)) != (byte,):
+        log.error("*** ending title block size isn't right")
+
+    #check the natom record
+    byte, byte2 = struct.unpack(bo('i4xi'), dcdfo.read(12))
+    if byte != 4:
+        log.error('*** natom record beginning block size is wrong')
+    if byte2 != 4:
+        log.error('*** natom record ending block size is wrong')
+
+    #rewind dcd to the beginning and parse it  
+    dcd = mp3.CordDCD(filename)
+    #dcdfo.seek(0)
+    #dcd.setfo(dcdfo)
+    #dcd.init()
+    if dcd.dcdtype() != "CORD":
+        log.error("*** bytes 8-11 don't seem to be 'CORD', but this probably isn't a problem")
+    natoms = dcd.natoms()
+    nframes = dcd.nframes()
+    log.info("    This dcd has %d atoms and %d frames"%(natoms, nframes))
+    log.log(17,"    Each frame is %d timesteps, for %d timesteps total"%(dcd.dcdfreq(), dcd.ntsteps()))
+    log.log(17,"    A timestep size is %f long (multilply by 50 to get fs"%dcd.tstep_size())
+    log.log(17,"    The first timestep is %d"%dcd.firsttstep())
+    log.log(17,"    The version of the program which generated this (I think) is %d"%dcd.charm_v())
+    log.log(17,"                       (I have no idea what this means, really)")
+    if dcd.dcdfreq()*nframes != dcd.ntsteps():
+        log.error("*** The wierd field for the total number of timesteps is inconsistent with the rest of the data")
+    if dcd.block_a() != 0 or dcd.block_b() != 0:
+        log.critical("*** block_a and block_b are %d and %d"%(dcd.block_a(),dcd.block_b()))
+        log.critical("    This may mean that you have some extra records mixed in with your")
+        log.critical("    coordinate records, but I've never seen one personally so I don't")
+        log.critical("    know how to respond.")
+
+    del dcd
+
+    # Check the total size:
+    # 92 bytes for the first header record
+    # 12+80*ntitle for the second
+    # 12 for natom record
+    # for each frame, (natoms*4+8)*3
+    #   * nframes
+    
+    stat = os.stat(filename)
+    header_size = 92 + 12+80*ntitle + 12
+    totalsize = stat.st_size
+    size_should_be =  header_size + (4*natoms+8)*3*nframes
+    appears_to_be_nframes = float(totalsize - header_size )/(4*natoms+8)
+    if totalsize != size_should_be:
+        log.error('The dcd seems to be of the wrong length')
+        log.error("  I calculate it at %d bytes, but see it at %d bytes"%(size_should_be, totalsize))
+        log.error("  This would correspond (with %s atoms), to %f frames"%(natoms, appears_to_be_nframes))
+
+    if options.only_header == False:
+        log.info("    Verifying body record headers...")
+        dcdfo.seek(0)
+        dcdfo.read(header_size)
+        for i in range(0,nframes):
+            if unpack(bo('i'),dcdfo.read(4)) != (natoms*4, ):
+                log.error("frame %d, cord %d, first record header mismatch"%(i,1))
+            dcdfo.seek(natoms*4,1 )
+            if unpack(bo('i'),dcdfo.read(4)) != (natoms*4, ):
+                log.error("frame %d, cord %d, ending record header mismatch"%(i,1))
+            if unpack(bo('i'),dcdfo.read(4)) != (natoms*4, ):
+                log.error("frame %d, cord %d, first record header mismatch"%(i,2))
+            dcdfo.seek(natoms*4, 1)
+            if unpack(bo('i'),dcdfo.read(4)) != (natoms*4, ):
+                log.error("frame %d, cord %d, ending record header mismatch"%(i,2))
+            if unpack(bo('i'),dcdfo.read(4)) != (natoms*4, ):
+                log.error("frame %d, cord %d, first record header mismatch"%(i,3))
+            dcdfo.seek(natoms*4,1)
+            if unpack(bo('i'),dcdfo.read(4)) != (natoms*4, ):
+                log.error("frame %d, cord %d, ending record header mismatch"%(i,3))
+    
+    log.log(17," Done processing %s"%filename)
+
+def bo(string):    # this is designed to accomodate byteorder selection.
+    if options.byteorder == 'little':
+        return '<' + string
+    elif options.byteorder == 'big':
+        return '>' + string
+    else:
+        log.critical("byteorder isn't big or little!")
+
+
+main()

@@ -1,0 +1,177 @@
+The DCD Format
+
+Richard Darst  (rkd zgib.net)
+Peter Rossky
+The University of Texas at Austin
+
+
+
+INTRODUCTION
+
+Various molecular simulation programs output trajectories in the form
+of a "DCD file".  This is a compact binary file holding some key
+parameters of a simulation, as well as coordinates of all atoms for a
+periodic sampling of frames (defined by the simulation).
+Alternatively, a "velocity DCD" file can be made, which will store
+velocities instead of positions of atoms.
+
+Many programs are capable of processing DCD files.  Unfortunately,
+this format is not well documented.  This can make trouble for
+scientists wishing to write their own analysis tools.  This document
+aims to address that problem.
+
+This document was created by my experiences working with DCD files,
+and from the sources named below.  Since this amounts to a
+reverse engineering of the format using only a small sample of the
+population, it is bound to be incomplete and incorrect in some
+respects.  Please email me (address above) with any corrections or
+suggestions.
+
+
+DEFINITIONS
+
+A _record_ is a sequence of bytes in the file.  It begins and ends in
+a four-byte header.  Both headers contain the length of the record (in
+bytes) stored as a integer.  The length stored is the length EXCLUDING
+the headers.  Between the headers, some amount of data is encoded.  It
+is the length of this data which is encoded in the headers.
+
+Each record will be represented by a schematic diagram as per below:
+
+abs:  offset of this field from the beginning of the DCD
+rel:  offset of this field from the beginning of the record
+type:  standard computer data type
+name:  arbitrary name for the this field
+description: short description, longer follows below if necessary
+
+
+SPECIFICATION 
+
+The first record in the DCD is the "meta-data" record.  It stores
+parameters describing the simulation producing the data.
+
+The total length of this record is 92 bytes, thus there are 84 bytes
+of data.  Below is a schematic representation of this record.  The
+names here are proposed; they have no authoritative source.
+
+abs     rel     type    name    description
+0       0       int     header  =84
+4       4       str     "CORD"  is "CORD" for a DCD with coordinates
+8       8       int     nframes number of frames in the DCD
+12      12      int     firsttstep first time step
+16      16      int     dcdfreq number of timesteps between frames
+20      20      int     ntsteps nframes*dcdfreq
+24      24      unused  
+28      28      unused  
+32      32      unused  
+36      36      unused  
+40      40      unused  
+44      44      float   tstep_size size of a timestep   
+48      48      int     charmm_a
+52      52      int     charmm_b
+56      56      unused  
+60      60      unused  
+64      64      unused  
+68      68      unused  
+72      72      unused  
+76      76      unused  
+80      80      unused  
+84      84      charmm_v possibly a version number
+88      88      header  =84
+
+Further descriptions of these fields:
+
+- "CORD": This may be used as a magic number to identify DCD files.
+  [1] implies that there may be DCD files without this, and without
+  coordinates, but this would seem to be a corner case.
+
+- firsttstep: NAMD can set what the starting step is recorded as, this
+  is a purely cosmetic parameter.
+
+- ntsteps: Indeed, this is a redundant field.
+
+- tstep_size: This field, when multiplied by 50, seems to give the
+  timestep in femtoseconds.  The author can not explain this.
+
+- charmm_a, charmm_b: A source [] indicates that a one in these fields
+  indicate an "there is an extra block [record] at the beginning of
+  each coordinate set" or "each coordinate set is also followed by an
+  extra block [record]".  The author has no firsthand experience with
+  these blocks and can make no further claims.  (guess: periodic cell
+  conditions?  References will be posted when found again. )
+
+- charmm_v:  The author believes that this contains some sort of
+  version number from the program which generated the DCD.
+
+
+The title record follows the metadata record.  This record contains
+some number of arbitrary 80-byte strings, presumably holding
+information on the simulation generating the data.  This record
+consists of the header, a integer specifying how many 80-byte strings
+follow (n), the 80 byte strings, and the closing header record.
+
+abs     rel     type    name    description
+92      0       int     header  = 80n+4
+96      4       int     ntitle  number of 80-char title strings
+100     8       str     title   80 byte string
+...     ...     ...     ...     further 80-byte strings, as per ntitle
+100+80n 8+80n   int     header  = 80n+4
+
+
+The number of atoms record follows the title record.  This record has
+the header, the number of atoms encoded as integer (k), and the
+closing header.
+
+abs     rel     type    name    description
+104+80n 0       int     header  = 4
+108+80n 4       int     ntitle  number of atoms in this DCD (=k)
+112+80n 8       int     header  = 4
+
+
+This ends the static data at the beginning of the DCD, all records
+which follow are repeated.
+
+  If charmm_a is a one, there could be and extra record here.  The
+  author has no experience with this, but if it did exist it could be
+  skipped by examining the header to find it's size [1].
+
+  Following are three records, the first of which holds all x
+  coordinates, the second of which holds all y coordinates, and so
+  on.  Note that this is counterintuitive-- all x coordinates for all
+  atoms are first, then a record for all y coordinates for all atoms,
+  then the record of all z coordinates (for the given frame).  Headers
+  are encoded as integers, coordinates as 32 bit floating point
+  numbers.
+
+  The obligatory schematic:
+ 
+  abs     rel     type    name    description 
+  -       0       int     header  = 4*k
+  -       4       float   atom    coordinate
+  ...     ...     ...     ...     
+  -       -       int     header  = 4*k
+
+  If charmm_b is one, there could be an extra record here.  It could
+  be treated similarly as the previous unknown header.
+
+The DCD is complete, without any extra record, after all coordinate
+sets are complete.
+
+
+REFERENCES 
+
+[1]  http://web.archive.org/web/20020805194326/www.ks.uiuc.edu/~danorris/projects/formats/dcd-xplor.shtml
+[2]  http://web.archive.org/web/20020805193655/http://www.ks.uiuc.edu/~danorris/projects/formats/dcd-charmm.shtml
+
+These two links have disappeared from www.ks.uiuc.edu, and had to be
+retrieved from archive.org.  These contained a rather detailed
+description of the DCD format, and the major basis for this work.  
+
+
+[3]  http://www.lrz-muenchen.de/~heller/ego/manual/node93.html
+
+
+DISTRIBUTION
+
+<insert some DFSG-free GPL compatible copyleft copyright notice here>
+

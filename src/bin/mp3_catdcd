@@ -1,0 +1,220 @@
+#!/usr/bin/env python
+
+import math, os, shutil, logging, sys, copy
+import profile
+import mp3 
+
+#logging.getLogger('dcdp').setLevel(logging.DEBUG)
+logging.addLevelName(17,'details')
+log = logging.getLogger('catdcd')
+log.addHandler(logging.StreamHandler(sys.stdout))
+
+
+def main():
+    from optparse import OptionParser
+    parser = OptionParser(usage="%prog [options] INPUT [ ... ] OUTPUT")
+    parser.add_option("--quiet", "-q", action='count', dest='quietness',
+                      help="Less information (incremental)", default=0)
+    parser.add_option("--verbose", "-v", action='count', dest='verbosity',
+                      help="More information (incremental)", default=0)
+#    parser.add_option("--", "-", action='', dest='',
+#                      help="")
+    parser.add_option("--skip", "", action='store', dest='skip', default=None, type='int',
+                      help="2 = print every other frame, 3=every third frame, ... [1]")
+    parser.add_option("--start", "", action='store', dest='start', default=None, type='int', 
+                      help="Frame to start at (counting begins from 1) [SKIP]")
+    parser.add_option("--stop", "", action='store', dest='stop', default=None, type='int',
+                      help="The last frame to possibly include in the new DCD [NFRAMES]")
+    parser.add_option("--slice", "", action='store', dest='slice', default=None, type='string',
+                      metavar="SKIP[,START[,STOP]]",
+                      help="equivalent to (and overrides) --skip SKIP [--start START [ --stop STOP]]")
+    parser.add_option("--count", "", action='store', dest='count', default=None, type='int',
+                      help="Total number of frames to output (overrides STOP)")
+    parser.add_option("--force", "-f", action='count', dest='force',
+                      help="xxx", default=0)
+    parser.add_option("--slice-help", "-H", action='store_true', dest='slicehelp', default=False,
+                      help="Instructions for taking slices of the DCD")
+    parser.add_option("--psf", "", action='store', dest='psf', type='string', default=None,
+                      help="PSF to get data from, output is pdbs, OUTPUT is the prefix")
+#    parser.add_option("--pdb", "", action='store', dest='pdb', type='string', default=None'
+#                      help="")
+
+
+
+
+    global options
+    (options, args) = parser.parse_args()
+
+    # set up the verbosity level
+    loglevel = 10*((options.quietness-options.verbosity)+2)
+    if loglevel <= 0:
+        loglevel = 10
+    elif loglevel == 10:
+        loglevel = 17
+    log.setLevel(loglevel)
+
+
+    # do we want to print out the help on slicing stuff?
+    if options.slicehelp == True:
+        print slice_help()
+        sys.exit(0)
+        
+    #sanitize input filenames
+    if len(args) < 2:      #is there at least one input?
+        log.critical("You must supply at least one input and one output dcd file!")
+        sys.exit(1)
+    inputs = args[0:-1]
+    for filename in inputs:    #are they all readable?
+        if os.access(filename, os.R_OK) == False:
+            log.critical("I cannot read the input file %s", file)
+            sys.exit(1)
+    output = args[-1]
+
+    #open all dcds for reading, set up our dcd agregrator
+    dcdobjs = [ ]
+    for input in inputs:
+        dcd = mp3.CordDCD(input)
+        dcdobjs.append(dcd)
+    dcds = mp3.CordMerge()
+    dcds.setcords(dcdobjs)
+
+    #sanitize the slice parameters
+    stop = options.stop
+    start = options.start
+    skip = options.skip
+    count = options.count
+    if options.slice != None:
+        slice = options.slice.split(",")
+        if len(slice) >= 1:
+            skip = int(slice[0])
+        if len(slice) >= 2:
+            start = int(slice[1])
+        if len(slice) >= 3:
+            stop = int(slice[2])
+    if skip == None:
+        skip = 1 
+    if count != None:
+        stop = start + (count-1)*skip
+    if stop == None: #is stop unset or is it greater than nframes ?
+        stop = dcds.nframes()
+    if stop > dcds.nframes(): #is stop unset or is it greater than nframes ?
+        stop = dcds.nframes()
+        log.warn("STOP truncated to end of DCD")
+    if stop < start:
+        log.critical("Your stop frame is before your start frame. I'm going to play it safe here and bail out.")
+        sys.exit(1)
+    if start == None:                       # is start unset? If so, then it is skip
+        start = skip
+    #print skip, start, stop, count
+    #calculate the slice we will cat out
+    n = int(math.ceil((stop-start+1-skip)/(float(skip)))) 
+    
+
+
+    # write a header with the new right nframes
+    # The issue here is that the header from the current dcd won't output the right number of frames
+    # So make a copy of it, change nframes, and use that header
+    dcds2 = copy.copy(dcds)
+    dcds2._nframes = n+1
+      #actual writing is after we open the file below 
+      
+    #
+    # Do we write a DCD or pdbs ?
+    #
+
+
+    # write the dcd
+    # I'll just copy this block
+
+    if options.psf == None:
+        if os.access(output, os.F_OK):    #does it already exist?
+            if options.force == 1:        #make backup
+                shutil.move(output, output+'.bak')
+            elif options.force == 2:      #go ahead and clobber it
+                pass
+            elif options.force == False:  #fail
+                log.critical("The proposed output file %s already exists, try -f if you know what you are doing",output)
+                sys.exit(1)
+
+        outputfo = file(output,'w')
+        outputfo.write(dcds2._bindcd_header())
+
+
+        log.info("Beginning DCD writing")
+        dcds.read_n_frames(start)
+        outputfo.write(dcds._bindcd_frame())
+        for framen in range(0,n):
+            dcds.read_n_frames(skip)
+            #print dcds.framen+1
+            outputfo.write(dcds._bindcd_frame())
+            #print framen # why not?
+
+
+
+    else:      #if we are writing pdbs
+        #no error checking yet
+        system = mp3.System()
+        system.cord = dcds
+        system.labels.getframpsf(file(options.psf))
+
+
+        counter = 0
+        dcds.read_n_frames(start)
+        system.pdbframe( output+'%.5d.pdb'%counter )
+        for framen in range(0,n):
+            dcds.read_n_frames(skip)
+            counter += 1
+            system.writepdb( output+'%.5d.pdb'%counter )
+            
+
+        #for framen in range(0,self.cord.nframes):
+        #    filename = prefix + ("%.5d" % framen) + ".pdb"
+        #
+        #    self.output = open(filename,"w",2000)
+        #    #output = open(filename,'w')
+        #    self.cord.nextframe()
+        #    self.pdbframe()
+        #    #output.write(self.pdbframe() )
+        #
+        #    self.output.close()
+        #    #output.close()
+
+
+
+
+
+def slice_help():
+    return \
+"""This program can return a subset of the input DCDs. This is
+specified by four possible numbers, of which three (but not any
+three) can specify a slice.
+
+All numbering begins at one. (NAMD does not include initial
+coordinates in the DCD)
+
+SKIP specifies the distance between frames to output.
+ex: SKIP=2  xXxXxXxXxX
+
+START specifies the first frame to be selected. If START is two:
+xXXXXXX
+
+START will default to SKIP. Thus it will do The Right Thing when you
+give it just a --skip option. The original DCD did not contain the
+first frame, and did contain the last frame, and if NFRAMES is a
+multiple of SKIP, the output will be the same way
+
+STOP is the last frame that is considered for output, inclusively. If
+STOP is greater than NFRAMES, it is changed to NFRAMES, and a warning
+is output. If STOP is less than START, then we exit.
+
+COUNT is an alternative way of specifying the endpoint. At most, a
+total of count frames will be output. COUNT is converted to a new
+value for STOP, overriding any possible previous value. The tests for
+STOP described above are run on the new value.
+
+"""
+
+
+#profile.run('main()', 'prof')
+main()
+

@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+#
+# prints a periodic box size's size to stdout.
+# doesn't support non-rectangular boxes.
+#
+
+import sys, optparse
+import mp3
+usage = """%s xst-file
+
+Simple script to output boxsizes and frame numbers from an xst file.
+Only works on orthogonal boxes of the form (x,0,0),(0,y,0),(0,0,z)"""%(sys.argv[0])
+
+parser = optparse.OptionParser(usage)
+#parser.add_option("-v", "--version", action="store_true", dest="version",
+#                  help="known bugs and how to call the exterminator")
+options, args = parser.parse_args()
+
+
+
+xst = mp3.xstbox(args[0])
+framen = 0
+while True:
+    try:
+        xst()
+        print xst.framen, xst.boxsize[0], xst.boxsize[1], xst.boxsize[2]
+    except:
+        break
+#        pass
+        

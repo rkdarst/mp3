@@ -1,0 +1,52 @@
+0.4 
+    ! changed the field names in labels objects:
+           atomid -> atomname
+           junk -> unused  
+        This makes it so that numbers are *num
+                              names are   *name
+    <label>.parsepsf() now strips whitespace from fields and preserves
+      allignment of atomname field
+    fixed some stuff with alignment of fields--
+      parses psf's by column number, not whitespace-separated fields
+      should fix problems with the "atomname" field.
+      might need bug testing
+    added the function.py module to hold various utility functions
+    added tools for parsing PDB coordinates and labels:
+      pdbcord.py  -- cordinates from PDBs
+      label method for reading labels from PDBs.
+      pdbsystem()  -- easy PDB parsing.          
+    label.py -- method findatom()
+    clean up/add documentation for labels.py
+    added align.py -- alignment of proteins
+    added "rmsd()" in function.py
+    added "cordtransform()" in function.py
+
+    
+
+0.3  2004-10-5
+    added some stuff for carlos to make it work in a program
+      that doesn't follow the PDB's standard about allignment
+      not being significant
+    changed included scripts to be called mp3_catdcd, etc
+    added scripts mp3_namdawk  - greps namd output
+                  mp3_xstboxsize - prints data from xst
+    added mp3.xstbox  -- interface to xst files
+    added a xst-wrapping feature to mp3.minimage()
+
+
+0.2 more docstrings
+    atomslice.py for taking slices of DCDs by atoms.
+    printing PDBs by atom slices is possible now.
+    dummycord.py added as a demonstration of making transforms on cords.
+    more demonstration scripts in tests/
+    2004-8-20
+    
+
+
+0.1 docstrings cleaned up (mostly)
+    centerer.py added
+    minimage.py added
+    various files renamed (THIS WILL BREAK THINGS!)
+    some stuff in tests/ has been added
+
+0.0 initial release. functional.

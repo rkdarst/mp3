@@ -1,0 +1,5 @@
+
+Methods to set behavior of Cord objects (and perhaps others):
+  - will follow the pattern setXXXX(XXXX=)
+  - The __init__ method will have a keyword argument of the type
+    XXXX= .  
