@@ -52,12 +52,12 @@ class CordTinkerArc(mp3.cord.Cord):
         # This may cause problems with pickling
         self._arc_fileobject = file(self._arcfile, "r")
 
-    def __init__(self, arcfile):
+    def __init__(self, arc):
         """Initilize the Tinker XYZ object.
 
         The argument is passed straight to setarc().
         """
-        self.setarc(arcfile)
+        self.setarc(arc)
 
     def setarc(self, arcfile):
         """Sets the archive file to read.
