@@ -75,19 +75,31 @@ class Labels:
         """This function finds atoms matching spefified conditions.
 
         This method takes keyword argument(s) of the form FIELD=VALUE.
-        FIELD is a fieldname of our data array, as given in the
-        class docstring.  A set of atoms is returned which contains
-        all atoms matching all criteria.
+        FIELD is a fieldname of our data array, as given in the class
+        docstring (help(mp3.Labels)).  
 
-        The atoms are returned in a "set".  See documentation on the
-        standard python module "sets" to find properties of this
-        construct.  It ensures that there are no duplicates, but does
-        not preserve order.  To convert this into a list, use list().
-        If the list must be sorted, used "thelist.sort()" (operates
-        in-place).
+        VALUE can be an exact match, or a range of matches.  If VALUE
+        is a tuple of length 2, it is interperted as the range
+        VALUE=(low, high).  The criteria is matched if
+        "low <= field <= high".  If VALUE is a single object (such as
+        5 or"H2"), the criteria is match if "field == VALUE".
 
-        If there is an "natoms=(integer)" keyword, restrict search to
-        the first (integer) atoms.
+        A "set" of atoms is returned which contains all atoms matching all
+        criteria.
+
+        The atoms are returned in a "set" object.  See documentation on
+        the standard python module "sets" to find properties of these
+        objects.  It ensures that there are no duplicates, but does not
+        preserve order.  To convert this into a list, use list(your_set).
+        If the list must be sorted, used "thelist.sort()" (which
+        operates in-place, so do "thelist.sort()", not
+        "thelist=thelist.sort()").
+
+        If there is an "natoms=INTEGER" keyword, restrict search to
+        the first INTEGER atoms.  This can be useful when, for
+        example, you are searching for a protein which is the first
+        3000 atoms of a 100000 atom file, and you want to only search
+        the first 3000 atoms, not all 100000 (for time reasons).
         """
         #atomlist = []
         #for i in range(self.natoms):
@@ -111,58 +123,34 @@ class Labels:
 
         lists_to_intersect = []
         for key,value in keywords.iteritems():
-            new_list = [ i for i in range(natoms)
-                         if self.data.field(key)[i] == value ]
+            # We want to be able to pick if we are finding an exact
+            # match, or a range.  If it is an exact match, then
+            # "value" will be the element to match.  If it is a range,
+            # "value" should be a tuple containing (low, high),
+            # inclusively.
+
+            if type(value) == tuple and len(value) == 2:  # we have a range match
+                low = value[0]
+                high = value[1]
+                fiel = self.data.field(key)
+                print "field: ", fiel[1]
+                #new_list = [ i for i in range(natoms)
+                #             if ( self.data.field(key)[i] >= low and self.data.field(key)[i] <= high ) ]
+                new_list = [ i for i in range(natoms)
+                             if ( fiel[i] >= low and fiel[i] <= high ) ]
+                lists_to_intersect.append(new_list)
+            else:                     # we have an exact match
+                new_list = [ i for i in range(natoms)
+                              if self.data.field(key)[i] == value ]
+            # End branch between exact and exact matches.
             lists_to_intersect.append(new_list)
         atomset = sets.Set(lists_to_intersect[0] )
         for otherlist in lists_to_intersect[1:]:
-            atomset &= otherlist
+            atomset &= sets.Set(otherlist)
         return atomset
         #return atomlist
 
-    def findrange(self, **keywords):
-        """Find a range of atoms
-        """
-
-
-        if keywords.has_key("natoms"):
-            natoms = keywords["natoms"]
-            del keywords["natoms"]
-        else:
-            natoms = self.natoms
-        #print keywords
-
-        lists_to_intersect = []
-        for key,value in keywords.iteritems():
-            #print key, value
-            low = value[0]
-            high = value[1]
-            #print low, high
-            fiel = self.data.field(key)
-            #print field
-            print "field: ", fiel[1]
-            #new_list = [ i for i in range(natoms)
-            #             if ( self.data.field(key)[i] >= low and self.data.field(key)[i] <= high ) ]
-            new_list = [ i for i in range(natoms)
-                         if ( fiel[i] >= low and fiel[i] <= high ) ]
-            #print new_list
-            lists_to_intersect.append(new_list)
-        atomset = sets.Set(lists_to_intersect[0] )
-        #print lists_to_intersect
-        for otherlist in lists_to_intersect[1:]:
-            atomset &= otherlist
-        return atomset
-
-
-
-
-        field = keywords.keys()[0]
-        range_ = keywords[field]
-        atomset = sets.Set()
-        for i in range(range_[0], range_[1]+1):
-            atomset |= self.findatoms(**{field: i})
-        return atomset
-
+    findrange = findatoms
 
     def _makedataarray(self):
         """Makes the numarray record array to store labels in.
