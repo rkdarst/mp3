@@ -284,10 +284,18 @@ class CordLESMod(mp3.cord.Cord):
     def rep_rmsd(self, repnum, atomlist):
         """Calculate rmsd for atoms in a replicate.
 
-        This function calculates a RMSD over constant frame and constant
-        replicate.  The average structure is the average of all the
-        replicates.
+        Specify the replicate by the argument repnum=.  The frame used
+        is the one currently loaded in the CordLES object.
 
+        This function calculates a RMSD over constant frame and
+        constant replicate.  That is: Find the deviation between an
+        atom and the average structure, RMSD it over your selected
+        replicate and frame, and all atoms specified it atomlist.
+
+        Replicate numbering starts from 0. (e.g., for 3 replicates you have
+        0,1,2 as replicate numbers here.)
+
+        Return value is the RMSD.
         
         """
         # "constant frame, replicate, varying atom"
