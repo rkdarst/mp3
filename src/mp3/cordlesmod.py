@@ -1,6 +1,6 @@
-import logging ; thelog = logging.getLogger('mp3')
-thelog.debug('Loading minimage.py')
+import math
 import numarray
+
 import mp3.cord
 import mp3.functions
 """This does un-wrapping of LES'ed cord objects.
@@ -71,6 +71,13 @@ class CordLESMod(mp3.cord.Cord):
     def setleslist(self, leslist):
         """Set the list describing the locally enhanced sampling in use.
         """
+        # An "leslist" basically caches information about what atoms
+        # are duplicated, in the _les_coordinate_set.
+        #
+        # It basically says "this many atoms NOT les, this many atoms les,
+        # this many atoms NOT les, this many atoms les, ..."
+        #
+        # It is calculated in mp3.functions._atomlist_to_leslist .  
         self._leslist = leslist
 
 
@@ -167,11 +174,16 @@ class CordLESMod(mp3.cord.Cord):
         cord = self.cord
         numreplicates = self._numreplicates
         
-        frame = numarray.zeros((self.natoms(), 3), type=numarray.Float32)
         oldframe = cord.frame()
         position = 0  # spot in leslist
-        newpos = 0    
-        oldpos = 0
+        newpos = 0    # spot in the old cord
+        oldpos = 0    # spot in the new cord
+
+        # We make "frame" to hold our coordinates.  This array is not big
+        # enough to hold all the LES replicates.  Instead, we use it to
+        # only hold the non-replicated atoms.  Then, we copy it multiple
+        # times into an array that is big enough to hold all the replicates
+        frame = numarray.zeros((self.natoms(), 3), type=numarray.Float32)
 
         # Iterate through leslist, using "break" to escape.
         while True: 
@@ -197,6 +209,8 @@ class CordLESMod(mp3.cord.Cord):
         # replicated properties.  Now, we have to go back through and
         # fill it with the atoms that have been replicated.
 
+        # This array is big enough to hold all replicates, atoms,
+        # and coordinates
         frames = numarray.zeros((numreplicates, self.natoms(), 3),
                                 type=numarray.Float32)
 
@@ -225,6 +239,10 @@ class CordLESMod(mp3.cord.Cord):
                 break
         #print "we got past making the arrays"
         self._frames = frames
+
+        # Summary of "frames":
+        #   this is an array that has three axes:
+        #   (0:replicates, 1:atoms, 2:coordinates)
 
         # Now, pick which one to return:
         if self._which_frame == -1:
@@ -262,8 +280,31 @@ class CordLESMod(mp3.cord.Cord):
         rmsd /= self._numreplicates
         numarray.sqrt(rmsd, rmsd)
         self._rmsd = rmsd
-    
 
+    def rep_rmsd(self, repnum, atomlist):
+        """Calculate rmsd for atoms in a replicate.
+
+        This function calculates a RMSD over constant frame and constant
+        replicate.  The average structure is the average of all the
+        replicates.
+
+        
+        """
+        # "constant frame, replicate, varying atom"
+        natoms = len(atomlist)      # how many atoms in our RMSD
+        replicate = self.frames()[repnum]    # select replicate
+        print repnum
+        average = self.mean()
+        rmsd_array = replicate[atomlist] - average[atomlist]  # find deviations
+                                                        # and select atoms
+             # axes of "rmsd" are (atoms, coordinate deviations)
+        rmsd_array *= rmsd_array
+        # we need to sum over it _all_ (atoms and squared deviations)
+        rmsd_array = numarray.sum(rmsd_array, axis=1)
+        rmsd_array = numarray.sum(rmsd_array, axis=0)
+        rmsd_num = math.sqrt( rmsd_array/natoms )
+
+        return rmsd_num
 
     def zero_frame(self):
         """Returns to frame zero.
