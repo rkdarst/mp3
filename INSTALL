@@ -1,0 +1,29 @@
+Installing uses python's distutils, so it should look like a standard
+interface.  If you are root, and you want to install for everyone, you
+should be able to do a simple
+
+    python setup.py install
+
+If "python" doesn't point to python2.3 or later, you need to do
+something like this:
+
+    python2.3 setup.py install
+
+If you don't want to install as root (which would be wise), you can do
+something like this:
+
+    python setup.py install --install-lib=~/sys/fakeroots/pymod --install-scripts ~/bin
+
+But, the catch is that you have to have the install-lib dir in your
+PYTHONPATH.  I do this via a entry in my .bashrc file:
+
+    export PYTHONPATH="$PYTHONPATH:/home/richard/sys/fakeroots/pymod"
+
+
+UPGRADING / REMOVING
+
+You should be able to install over the old version.  There may be
+extra files lying around, but nothing should break.  If you want to
+clean up these old files, simply delete the "mp3" directory from the
+python install-lib directory, and mp3_* (check this first!!!) from the
+install-bin directory.
