@@ -15,6 +15,13 @@ class CordPDB(mp3.cord.Cord):
     """Manages coordinates from a PDB series
     """
     initted = False
+
+    def __init__(self, pdblist=None):
+        """
+        """
+        if dcd != None:
+            self.setpdblist(dcd)
+
     def init(self):
         """Initilizes data about the PDBs.
 
