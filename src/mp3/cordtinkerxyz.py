@@ -112,8 +112,6 @@ class CordTinkerXYZ(mp3.cord.Cord):
         of them when I find them.
         """
         #print attrname
-        #raise
-        print attrname
         raise
         return self.cord.__dict__[attrname]
 
