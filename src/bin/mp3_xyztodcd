@@ -22,7 +22,7 @@ def main():
     parser.add_option("--remove", "-R", action='store_true', dest='remove_inputs', default=False,
                       help="Remove the input files (useful with -F)")
     parser.add_option("--list", "-l", action='store_true', dest='list_inputs', default=False,
-                      help="Remove the input files (useful with -F)")
+                      help="Just list the inputs, don't do anything")
 
     (options, args) = parser.parse_args()
     
@@ -41,17 +41,18 @@ def main():
         after = len(xyzs)
         info("Filtering by extension \.\d{3,}$ reduced inputs from %s to %s"%(before, after))
 
-    if options.remove_inputs == True:
-        really = raw_input("really remove all inputs (y/n)? [n]: ")
-        if really[0] == "y" or really[0] == "Y":
-            [ os.remove(x) for x in xyzs ]
-            sys.exit()
     # This option is for when you just want it to list what it would use,
     # after it has been filtered as per above.  This is useful for when
     # you want to use the output in a shell process substitution.
     if options.list_inputs == True:
         print " ".join( xyzs )
         sys.exit()
+
+    if options.remove_inputs == True:
+        really = raw_input("really remove all inputs (y/n)? [n]: ")
+        if really[0] == "y" or really[0] == "Y":
+            [ os.remove(x) for x in xyzs ]
+            sys.exit()
 
     if dcd[-4:] != ".dcd":
         warn( "\n".join(["The DCD file does not have the .dcd extension.",
