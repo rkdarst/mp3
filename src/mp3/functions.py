@@ -144,7 +144,9 @@ def _atomlist_to_leslist(atomlist, natoms):
     atom, and "natoms", the total number of atoms in the system.
     """
     type_ = False   # True = the last atom was in atomlist,
+                    #        = the last atom was LESed
                     # False = the last atom wasn't in atomlist.
+                    #        = the last atom was NOT LESed
     leslist = [ 0 ]
     for i in range(natoms):
         if i in atomlist:
