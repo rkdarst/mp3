@@ -13,9 +13,15 @@ class CordMerge(mp3.cord.Cord):
         """
         """
         thelog.debug('--in cords.py, __init__()')
-        self._cords = [ ]
+        # Editorial note: The new policy says that we always do all
+        # initialization in the __init__ method, not by calling other
+        # methods (unless there is a GREAT need).  So "cords" here
+        # should never be none, really.
         if cords is not None:
+            self._cords = cords
             self._init()
+        else: 
+            self._cords = [ ]
         
     def setcords(self, cords):
         """A wrapper to set the coordinates.
