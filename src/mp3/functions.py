@@ -121,6 +121,8 @@ def tinkeratomreplace(infile, outfile, replacements):
             line = "".join([line[:48],  replacements[atomname],  line[53:]])
             newxyz_list.append( line )
             number_of_replacements += 1
+        else:
+            newxyz_list.append(line)
     newxyz_string = "".join(newxyz_list)
     #print newxyz
     outfo = file(outfile, "w")
