@@ -22,6 +22,7 @@ data_files = []
 scripts = []
 scripts.append('src/bin/mp3_verify')
 scripts.append('src/bin/mp3_catdcd')
+scripts.append('src/bin/mp3_geom')
 scripts.append('src/bin/mp3_namdawk')
 scripts.append('src/bin/mp3_xstboxsize')
 scripts.append('src/bin/mp3_xyztodcd')

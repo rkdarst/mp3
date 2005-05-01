@@ -1,0 +1,61 @@
+#!/usr/bin/env python
+
+import sys
+import mp3
+
+from optparse import OptionParser
+parser = OptionParser()  #usage="usage"
+#parser.add_option("-x", "--xx", action="", dest="", default=""
+#                                    help="", )
+(options, args) = parser.parse_args()
+
+args = " ".join(args)
+args = args.split(',')
+commands = [ arg.split(" ") for arg in args ]
+commands = [ [x for x in command if x != ''] for command in commands ]
+print commands
+
+
+queries = []
+i=0
+
+for command in commands[1:]:
+    if command[0][0] == "d":
+        queries.append("adistance(%s, %s)"%(command[1], command[2]))
+        continue
+    elif command[0][0] == "a":
+        queries.append("aangle(%s, %s, %s)"%(command[1], command[2], command[3]))
+        continue
+    elif command[0][0:2] == "px":
+        queries.append("aposition(%s)[0]"%(command[1]))
+        continue
+    elif command[0][0:2] == "py":
+        queries.append("aposition(%s)[1]"%(command[1]))
+        continue
+    elif command[0][0:2] == "pz":
+        queries.append("aposition(%s)[2]"%(command[1]))
+        continue
+    elif command[0][0] == "p":
+        queries.append("aposition(%s)"%(command[1]))
+        continue
+    else:
+        print "unknown command", command 
+    break
+#print queries
+
+
+
+
+C = mp3.smartcord(commands[0])
+if C is None:
+    print
+    print "ERROR-- We did not initialize any coordinates!"
+    print "None of these worked:", commands[0]
+    sys.exit()
+    
+for i in range(C.nframes()):
+    C.nextframe()
+    print i,
+    for j in queries:
+        exec "print C.%s ,"%j
+    print 
