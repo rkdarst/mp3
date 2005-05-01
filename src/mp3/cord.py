@@ -5,12 +5,18 @@
 
 
 import string, struct
+import numarray
+import math
 import logging ; thelog = logging.getLogger('mp3')
 thelog.debug('Loading cord.py')
 import mp3.functions
 
 class Cord:
 
+    def __repr__(self):
+        return "{{cord object}}"
+    def __str__(self):
+        return "{{cord object}}"
 #
 #  General Queries
 #
@@ -90,6 +96,40 @@ class Cord:
         else:
             self._title = title
 
+#
+#   Some queries to get geometric information.
+#
+
+
+    def aposition(self,i):
+        """Return position vector of some atom.
+        """
+        return self.frame()[i]
+        
+    def adistance(self, i, j):
+        """Return distance between two atoms.
+
+        """
+        dist_v = self.frame()[i] - self.frame()[j]
+        #print self.frame()
+        dist_v = numarray.multiply(dist_v, dist_v)
+        dist = dist_v.sum()
+        return math.sqrt(dist)
+        
+        
+    def aangle(self, i, center, j):
+        """Return the angle between three angles in radians.
+        """
+
+        # These functions were taken from mp3.functions.  You would
+        # probably want to keep them syncronized in both places.
+        _dot = numarray.dot
+        _norm = lambda x: math.sqrt(_dot(x,x))
+
+        frame = self.frame()
+        disp1 = frame[i] - frame[center]
+        disp2 = frame[j] - frame[center]
+        return math.acos(_dot(disp1, disp2) / (_norm(disp1) * _norm(disp2)))
 
     def transform(self, move=None, rotate=None):
         """Transform the current frame.
