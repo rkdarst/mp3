@@ -33,6 +33,8 @@ class CordMinImage(mp3.cord.Cord):
             self.setcord(keywords["cord"])
         if keywords.has_key("boxsize"):
             self.setboxsize(keywords["boxsize"])
+        if keywords.has_key("xst"):
+            self.setxst(keywords["xst"])
         if keywords.has_key("cord") and keywords.has_key("boxsize"):
             self.init()
         
@@ -62,6 +64,16 @@ class CordMinImage(mp3.cord.Cord):
                                                  # takes no arguments
             self._boxsize_call = boxsize_call
 
+    def setxst(self, xst):
+        """Set wrapping from an (namd) XST file.
+
+        Argument should be a string which will be opened with the
+        class Xstbox and read from there.  It should have been written
+        with the same frequency as your coordinate frames.
+        """
+        xst = mp3.Xstbox(xst)
+        self.setboxsize(xst)
+
     def setcord(self, cordobj):
         """Sets what we want to min image wrap.
 
@@ -75,7 +87,8 @@ class CordMinImage(mp3.cord.Cord):
         This will return the next frame, wrapping it.
         """
         self._frame = self.cord.nextframe()
-        self._wrap_frame
+        self._wrap_frame()
+        return self._frame
 
     def _wrap_frame(self):
         self.boxsize = numarray.asarray(self._boxsize_call())
@@ -87,7 +100,7 @@ class CordMinImage(mp3.cord.Cord):
         numarray.multiply(wrapping, self.boxsize, wrapping)
         numarray.subtract(frame, wrapping, frame)
         self._frame = frame
-        return _frame
+        return frame
             
     def nextframe_nowrap(self):
         """Advance the frame without wrapping."""
