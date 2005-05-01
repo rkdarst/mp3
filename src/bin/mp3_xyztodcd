@@ -40,7 +40,8 @@ def main():
         xyzs = [ x for x in xyzs if pattern.search(x) is not None ]
         after = len(xyzs)
         info("Filtering by extension \.\d{3,}$ reduced inputs from %s to %s"%(before, after))
-
+        mp3.functions.filename_regex["tinkerxyz"] = re.compile(r'\.(\d\d\d+)$')
+        
     # This option is for when you just want it to list what it would use,
     # after it has been filtered as per above.  This is useful for when
     # you want to use the output in a shell process substitution.
@@ -59,12 +60,13 @@ def main():
                          "To prevent mistakes, that extension is required."] ))
         sys.exit()
 
+    # This is included if you use the -F option!!
+    # mp3.functions.filename_regex["tinkerxyz"] = re.compile(r'\.(\d\d\d+)$')
 
-    if options.arc_format == False:
-        cord = mp3.CordTinkerXYZ(xyzs)
-    else:
-        cord = mp3.CordTinkerArc(xyzs[0])
-        
+    cord = mp3.smartcord(xyzs)
+
+    print "number of frames:", cord.nframes()
+    print "number of atoms:", cord.natoms()
     print "cord set, beginning writing"
     cord.writedcd(dcd)
     print "done"
