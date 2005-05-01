@@ -5,6 +5,7 @@
 #
 
 import numarray, math
+import re
 import mp3
 
 def pdbsystem(name):
@@ -21,6 +22,160 @@ def pdbsystem(name):
     system.cord.pdblist(name)
     system.cord.nextframe()
     return system
+
+def smartsystem(*args):
+    """Create a system from arbitrary input files.
+
+    This function takes any arguments, and returns a system.  The
+    systems contains all coordinate files, in sequence, as well as any
+    label files.
+    """
+    inputs = []
+    # Make a single list out of all inputs, regardless if the
+    # arguments are lists or single strings.
+    for i in args:  
+        if type(i) == list or type(i) == tuple:
+            inputs.extend(i)
+        else:
+            inputs.append(i)
+
+    cords = []
+    labels = []
+    for input_ in inputs:
+        type_ = whatisit(input_)
+        if type_ in ("tinkerxyz", "pdb", "dcd", "tinkerarc"):
+            cords.append(input_)
+        if type_ == "psf":
+            labels.append[input_]
+        
+    S = mp3.System()
+    if len(cords) == 0:                      # Set up all the cords
+        pass
+    else:
+        C = smartcord(cords)
+        S.setcord(C)
+    #for i in labels                   # Set up all the labels
+    if len(labels) > 0:
+        print "we don't support reading in labels yet! (pester the maintainer)"
+
+    return S
+        
+
+def smartcord(*args):
+    """Return Turn the list of inputs into a cord object.
+    """
+    inputs = []
+    for i in args:                               # make it all be one big list of strings
+        if type(i) == list or type(i) == tuple:
+            inputs.extend(i)
+        else:
+            inputs.append(i)
+    cords = []            # cords is a list of:
+                           # strings
+                           # lists of strings of pdbs or tinkerxyzs.
+    lasttype = None
+    for input_ in inputs: # now, make the xys's and pdb's be lists of
+                                                 # themselves
+        type_ = whatisit(input_)
+        if type_ in ("tinkerxyz", "pdb"):
+            if lasttype == type_:
+                cords[-1].append(input_)
+            else:
+                cords.append( [ input_ ] ) # append a LIST here, since
+                                            # it might be appended to
+                                            # later
+            lasttype = type_
+        elif type_ in ("dcd", "tinkerarc"):
+            cords.append(input_)
+            lasttype = None
+        else:
+            print "Unknown file type (skipping):", input_
+    #print cords
+    # we have better not have a null input list!
+    if len(cords) == 0:
+        # this is bad...
+        return None
+    elif len(cords) == 1:
+        C = _smartcord_single(cords[0])
+    else:
+        cord_objs = [ _smartcord_single(i) for i in cords ]
+        print cord_objs
+        C = mp3.CordMerge(cords=cord_objs)
+    return C
+
+def _smartcord_single(name):
+    """Return a cord object.
+
+    Takes either a string with a cord file, or a list of tinkerxyz's
+    or pdb's.
+    """
+    type_ = whatisit(name)
+    #print name, "lalala"
+    if type_ in ("tinkerxyz", "tinkerxyzlist"):
+
+        # if the length of the list is one, what if it is really a
+        # glob (like "*.xyz_*") that the user was expecting the
+        # CordTinkerXYZ to expand as a shell glob.  It will only do
+        # this if you pass it a string, not a list with stuff in it.
+        #
+        # Note that there is still one case where this can break.  If
+        # the user passed two globs in a row, then it won't turn them
+        # into two individual strings, it would leave it as a list
+        # with two (non-globbed) strings in it.  Let the user beware
+        # (not that I'm warning them any, yet).
+        if len(name) == 1:
+            return mp3.CordTinkerXYZ(xyzlist=name[0])
+        else:
+            return mp3.CordTinkerXYZ(xyzlist=name)
+    if type_ in ("tinkerarc",):
+        return mp3.CordTinkerArc(arc=name)
+    if type_ in ("pdb", "pdblist"):
+        if len(name) == 1:
+            return mp3.CordPDB(pdblist=name[0])
+        else:
+            return mp3.CordPDB(pdblist=name)
+    if type_ in ("dcd",):
+        return mp3.CordDCD(dcd=name)
+
+# filename_regex is a mapping between file types and (compiled)
+# regular expressions on the file name that tell what kind of files
+# they are.  You can add keys to it if you want.
+# you should SEARCH (not match) for these rexexps
+
+filename_regex = {}
+filename_regex["tinkerxyz"] = re.compile(r'\.xyz(_\d+)?$')
+filename_regex["tinkerarc"] = re.compile(r'\.arc(_\d+)?$')
+filename_regex["dcd"]       = re.compile(r'\.dcd$')
+filename_regex["pdb"]       = re.compile(r'\.pdb$')
+filename_regex["psf"]       = re.compile(r'\.psf$')
+
+#mp3.functions.filename_regex["tinkerxyz"] = re.compile(r'\.(\d\d\d+)$')
+
+
+def whatisit(filename):
+    """Return the type of file.
+
+    Do a simple regex match on the given filename.  Return a string
+    indicating what type of file it probably is.  Return values are
+    "tinkerxyz", "tinkerarc", "dcd", "pdb", "psf", or None (if it
+    doesn't match any of them).
+
+    Can also return "pdblist" or "tinkerxyzlist".  Does NOT handle
+    non-homogeneous or zero-length lists.
+    """
+    # you should SEARCH (not match) for these rexexps
+    regex = filename_regex
+    for key, value in regex.iteritems():
+        if type(filename) == list:
+            if regex[key].search(filename[0]) != None:
+                return key+"list"
+        else:
+            if regex[key].search(filename) != None:
+                #print key
+                return key
+            
+    return None
+    
     
 def rmsd(frame1, frame2):
     """Finds the RMSD between two frames
