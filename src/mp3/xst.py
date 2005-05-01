@@ -1,6 +1,6 @@
 
 
-class xstbox:
+class Xstbox:
     """Interface to xst (extended system trajectory) files
 
     This class allows you to get a handle on xst files, and extract
@@ -24,14 +24,14 @@ class xstbox:
 
     
     """
-    def __init__(self, xstfile=None):
+    def __init__(self, xst=None):
         """Sets it up.
 
         This method takes an optional argument, which is the xst filename.
         Giving the optional argument replaces the need to call .setxst()
         """
-        if xstfile != None:
-            self.setxst(xstfile)
+        if xst != None:
+            self.setxst(xst)
 
     def setxst(self, xstfile):
         """Sets the underlying xstfile.
