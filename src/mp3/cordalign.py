@@ -8,7 +8,10 @@ import logging ; thelog = logging.getLogger('mp3')
 thelog.debug('Loading minimage.py')
 
 import numarray
-import Simplex
+try:
+    import Simplex
+except:
+    pass
 import mp3.functions
 import mp3.cord
 
