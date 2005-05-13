@@ -234,7 +234,7 @@ class Cord:
     def _writedcd(self, outfo):
         """Write a dcd to a file object which has been opened for writing.
 
-        You probably want to use "writedcdfile" instead.
+        You probably want to use "writedcd" instead.
         """
 
         thelog.debug('--in cord.py, writedcd()')
