@@ -7,16 +7,8 @@
 #  Contact: (rkd zgib.net)
 #
 
+import sys
 
-import logging, sys
-_log = logging.getLogger('mp3')
-_theloghandler = logging.StreamHandler(sys.stdout)
-_theloghandler.setFormatter( logging.Formatter("mp3:%(levelname)s:%(filename)s %(message)s"))
-_log.addHandler(_theloghandler)
-_log.debug('Logger Initilized')
-_log.info('DCD Management Library 0.0')
-_log.debug('Old joke: never use version 0.x or x.0 (UT ITS UNIX Group)')
-#thelog.setLevel(logging.INFO)
 
 #  The purpose of the __init__ module is to load my definitions from all
 # other files.  I hope that this will make it more organized.
