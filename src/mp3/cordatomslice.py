@@ -4,24 +4,70 @@
 #atoms from a DCD object, and only pass those atoms on.
 #
 
-import logging ; thelog = logging.getLogger('mp3')
-thelog.debug('Loading cordatomslice.py')
 import numarray
 import mp3.cord
 
+from mp3.log import mp3log
+mp3log.debug("loading cordatomslice.py")
 
 class CordAtomSlice(mp3.cord.Cord):
     """Use only a subset of atoms in a cord object.
-    
-    This module defines a class that will extract a (constant) subset of
-    atoms from a cord object, and only pass those atoms on.  This might
-    be useful when, for instance, you want to process a DCD of just a
-    protein instead of the protein + solvent.
 
-    You can initilize the instance with the optional keyword arguments
-    'cord' and 'atoms'.  These will set the cord object to get
-    coordinates from, and which atoms to pass through.  If both are
-    given, then .init() method will be called for you.
+    Example usage:  (protein with solvent) -> (just the protein)
+
+    >>> C = mp3.CordDCD("my.dcd")
+    >>> C.nframes()
+    1000
+    >>> C.natoms()
+    100000
+    
+    >>> C_sliced = mp3.CordAtomSlice(cord=C, atomlist=range(3000))
+                                   # the first 3000 atoms are the protein
+    >>> C_sliced.nframes()
+    1000
+    >>> C_sliced.natoms()
+    3000
+
+    
+    This module defines a class that will extract a (constant) subset
+    of atoms from a cord object, and only pass those atoms on for any
+    further analysis or processing.  This might be useful when, for
+    instance, you want to analyze the coordinates of just a protein
+    instead of the protein + solvent.
+
+    The class should be initilized as such:
+
+    C = CordAtomSlice(cord=CORD, atomlist=ATOMLIST)
+
+    CORD should be some other cord object.
+
+    ATOMLIST is a specification of which atoms to include.
+    Technically, the actual slicing is performed this way:
+
+            frame = nextframe[ATOMLIST]
+
+    So ATOMLIST is anything that can "slice" a numarray.  Most typically,
+    this would be a simple atomlist:
+
+    atomlist = range(10)     # the first 10 atoms
+
+    atomlist = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+                             # the first 10 atoms IN REVERSE ORDER.
+                             # This is a feature of numarray slicing.
+                             # It will return the atoms in the order
+                             # you specify.
+
+    atomlist = [0, 1, 8, 9]
+                             # Atoms 1,2, 9, 10 (note counting from zero)
+
+    atomlist = list(S.findatoms( <stuff> ))
+    atomlist.sort()
+                             # If you use findatoms, remember to
+                             # convert it to a list first.  Also, you
+                             # probably want to sort it, or else the
+                             # indexes may be scrambled and you can't
+                             # use it
+
     """
 
     def __init__(self, **keywords):
@@ -38,28 +84,43 @@ class CordAtomSlice(mp3.cord.Cord):
         """
         # Set cord with the normal method if it was passed.  Set atoms if
         # atomlist was passed.  init() if both were passed.
+        mp3log.debug("Initilizing CordAtomSlice instance.")
+
+        keywords.has_key("atomlist") or mp3log.warn(
+            "Not initializing CordAtomSlice with an atomlist.")
+        keywords.has_key("cord") or mp3log.warn(
+            "Not initializing CordAtomSlice with an cord.")
+        
         if keywords.has_key("cord"):
             self.setcord(keywords["cord"])
-        if keywords.has_key("atoms"):
-            self.setatoms(keywords["atoms"])
+
+        if keywords.has_key("atomlist"):
+            self.setatomlist(keywords["atomlist"])
+
         if keywords.has_key("cord") and keywords.has_key("atoms"):
-            self.init()
+            #self.init()
+            pass
 
     
     def init(self):
         """Initilize the atomslicer."""
-        self.cord.init()
+        pass
+        #self.cord.init()
 
-    def setcord(self, cordobj):
+    def setcord(self, cord):
         """Set the coordinate object to get our data from.
 
         Use this method to set the underlying coordinate-like object is.
         The slice is taken from this coordinate object.
         """
-        self.cord = cordobj
-        self.cord.init()  # The cordobj can either be initilized or not, it should not break anything
+        self.cord = cord
 
-    def setatoms(self, atomlist):
+        # We don't use the init() method anymore, the instances should
+        # be initilized as soon as they are created.
+        #self.cord.init()  
+                         
+
+    def setatomlist(self, atomlist):
         """Set which atoms to pass through.
 
         The argument to this function is a list of atoms which will be
@@ -67,6 +128,7 @@ class CordAtomSlice(mp3.cord.Cord):
         atoms, since if that was likely, then this wrapper wouldn't be
         used, would it ?
         """
+        mp3log.debug("We have %s atoms passed through."%len(atomlist))
         self.atomlist = atomlist
         self._natoms = len(atomlist)
 
