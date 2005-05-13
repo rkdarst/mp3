@@ -1,6 +1,6 @@
 import sys, string, struct
-import logging ; thelog = logging.getLogger('mp3')
-thelog.debug('Loading corddcd.py')
+import mp3.log as log
+log.debug('Loading corddcd.py')
 import numarray
 import mp3.cord
 """
@@ -30,7 +30,7 @@ class CordDCD(mp3.cord.Cord):
         something wierd.  It won't hurt to call this more than once.
         It is now called automatically by setinput().
         """
-        thelog.debug('--in corddcd.py, init()')
+        log.debug('--in corddcd.py, init()')
         if hasattr(self, '_initted') and self._initted == True:
             return None
         self._get_header()
@@ -56,14 +56,14 @@ class CordDCD(mp3.cord.Cord):
         loads the next frame in self.frame . Hides details about wheter
         or not the dcd has been loaded into memory
         """
-        thelog.debug('--In dcd.py, nextframe()')
+        #log.debug('--In dcd.py, nextframe()')
         #if self.initted == 0:
         #    thelog.critical("init it first! I won't do it here to save time...")
         #    return
         #thelog.info('make a better solution for this...')
         if self._framen >= self._nframes-1:  #if there are 10 frames total, framen can not be
                                            #more than 9. So stoup if framen >= nframes -1
-             thelog.critical("tried to read more frames than there were. BAILING OUT!!")
+             log.critical("tried to read more frames than there were. BAILING OUT!!")
              return None
         ##if hasattr(self, 'data'):
         ##    self.framen += 1
@@ -84,7 +84,7 @@ class CordDCD(mp3.cord.Cord):
         Note that it might just skip the data for speed issues, it need not
         concern you.
         """
-        thelog.debug('--In dcd.py, read_n_frames()')
+        #log.debug('--In dcd.py, read_n_frames()')
         # note that this has to accomodate both the cases where you
         # have already loaded it all into memory and where you are
         # reading it frame-by-frame. You could either call self.nextframe()
@@ -99,7 +99,7 @@ class CordDCD(mp3.cord.Cord):
         # we could make this part of the generalized dcd class
         ntoread = int(ntoread)
         if self._framen + ntoread > self._nframes - 1:   #can't read more than we have
-            thelog.critical("tried to read more frames than there are!")
+            log.critical("tried to read more frames than there are!")
 
 #I'll advance the dcd file by the right amount
         ntoskip = ntoread-1
@@ -113,12 +113,12 @@ class CordDCD(mp3.cord.Cord):
         """makes it where the next frame returned is 0. This function itself
         does not return anything.
         """
-        thelog.debug('---In dcd.py, zero_frame(). self.framen=%s'%self._framen)
+        log.debug('---In dcd.py, zero_frame(). self.framen=%s'%self.framen())
         ##if self.loadedinmem == 1:
         ##    thelog.debug("dcd.py, zero_frame(), it's loaded in mem so just resetting framen")
         ##    self.framen = -1    #we don't have to deal with any file rewinding here
         ##else:
-        thelog.debug("dcd.py, zero_frame(), resetting file object and framen")
+        log.debug("dcd.py, zero_frame(), resetting file object and framen")
         self._framen = -1
             #self.fo.seek(0)     #we have to seek past the header somehow.
             #(combined below)    #but actual header size varries with the length
@@ -137,7 +137,7 @@ class CordDCD(mp3.cord.Cord):
         sets the filename (string, not file object) that we will be reading from.
         Now, it also .init()s the dcd object
         """
-        thelog.debug('---in dcd.py, setfo()')
+        log.debug('---in dcd.py, setfo()')
         self._fo = file(filename,"r")
         self.init()
         
@@ -152,17 +152,17 @@ class CordDCD(mp3.cord.Cord):
         Not for public use.
         Wrapper method. Calls methods to read in all the headers.
         """
-        thelog.debug('---In dcd.py, get_header()')
+        log.debug('---In dcd.py, get_header()')
         self._parse_header()
         self._parse_title()
         self._parse_atoms()
     
-        thelog.debug("Parsing: %s"% self._title)    #print out some useful information
+        log.debug("Parsing: %s"% self._title)    #print out some useful information
         for i in range(0,len(self._title),80):
-            thelog.debug(self._title[i:i+80])
+            log.debug(self._title[i:i+80])
 
         if self._nframes*self._dcdfreq != self._ntsteps:
-            thelog.warn("error-- the wierd ntsteps frame is not what I think it should be!")
+            log.warn("error-- the wierd ntsteps frame is not what I think it should be!")
     
     ####end main funcition####################
     def _parse_header(self):
@@ -170,7 +170,7 @@ class CordDCD(mp3.cord.Cord):
 
         Not for public use
         """
-        thelog.debug('---In dcd.py, parse_header()')
+        log.debug('---In dcd.py, parse_header()')
         #process the first header block
 
         header1 = self._fo.read(92)
@@ -189,9 +189,9 @@ class CordDCD(mp3.cord.Cord):
     
         self._dcdtype = "".join((c1,c2,c3,c4))   #get the data-type field. I it should always be cord...
         if header1_size1 != 84 or header1_size2 !=84:
-            thelog.error("error-- header size fields not correct (should be 84)\n")
+            log.error("error-- header size fields not correct (should be 84)\n")
         if self._block_a != 0 or self._block_b != 0:
-            thelog.error("I've found some charmm wierdness-- the alignment could be all wrong-- no corrections will be made!")
+            log.error("I've found some charmm wierdness-- the alignment could be all wrong-- no corrections will be made!")
     
     #########################
     def _parse_title(self):
@@ -199,7 +199,7 @@ class CordDCD(mp3.cord.Cord):
 
         Not for public use.
         """
-        thelog.debug('---In dcd.py, parse_title()')
+        log.debug('---In dcd.py, parse_title()')
         ##
         ##Parse the title field
         ##
@@ -211,11 +211,11 @@ class CordDCD(mp3.cord.Cord):
         title = ""
         blocksize, n = struct.unpack("ii", self._fo.read(8))   #read in 8 bytes, convert to ints, store in blocksize, n
         if blocksize != 80*n+4:
-            thelog.error("beginningblock size in title block is wrong\n")
+            log.error("beginningblock size in title block is wrong\n")
         for i in range(0,n):
             title = title + self._fo.read(80)          # read the next title string onto the current one.
         if (blocksize, ) != struct.unpack("i", self._fo.read(4)):
-            thelog.error("ending blocksize on the title block is not correct !\n")
+            log.error("ending blocksize on the title block is not correct !\n")
         self._title = title
     
     ######################################
@@ -230,10 +230,10 @@ class CordDCD(mp3.cord.Cord):
         ##Parse the number of atoms
         ##
         #format: 3 ints, first one is blocksize (must equal 4), second is natoms, third is blocksize (must equal 4)
-        thelog.debug("---in dcd.py, parse_atoms()")
+        log.debug("---in dcd.py, parse_atoms()")
         blocksize, self._natoms, blocksize2 = struct.unpack("iii", self._fo.read(12))
         if blocksize != 4 or blocksize2 != 4:
-            thelog.error("blocksizes in the number of atoms record is broken\n")
+            log.error("blocksizes in the number of atoms record is broken\n")
         
     
     ##########################
@@ -270,7 +270,7 @@ class CordDCD(mp3.cord.Cord):
         stores it as self.frame.  No return value.  Does not advance self.framen.
         Look at nextframe() instead.
         """
-        thelog.debug('---In dcd.py, get_next_frame(), self.framen=%s'%self.framen)
+        #log.debug('---In dcd.py, get_next_frame(), self.framen=%s'%self.framen())
         self._fo.read(4)             #to save time, we won't error check this ! (or should we ?
         self._frame[:,0]= numarray.fromfile(self._fo, numarray.Float32, shape=(self._natoms,))
         self._fo.read(8)
