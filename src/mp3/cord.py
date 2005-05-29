@@ -151,6 +151,69 @@ class Cord:
         """
         self._frame = mp3.cordtransform(self.frame(), move=move, rotate=rotate)
         return self._frame
+
+#
+#   Iterators
+#
+
+    def itercords(self):
+        """Iterate over cord-objects.
+
+        This docstring documents both the itercords and iterframes
+        methods.
+        
+        It's probably best to start off with an example:
+        >>> for i in C.itercords():
+        ...     print i.framen()
+        0
+        1
+        2
+        3
+        4
+        ...
+
+        So, this is just like using
+        >>> for element in [0, 1, 2, 3]
+        >>>     ...
+
+        It's only(?) useful where you would use "for" somewhere.  If
+        you did "for i in C.itercords()", this will call C.nextframe(),
+        then run the stuff in the for block with i = the cord-object
+        (C).  Note that i here is a dummy variable.  Since i is the
+        same thing as C (they point to the same thing, so both have
+        their frames advanced), you can equally use C inside the loop,
+        or even do "for C in C.itercords()"
+
+        ITERFRAMES
+
+        This operates just like C.itercord(), but the dummy variable
+        becomes each frame in sequence.  So you could do
+
+        >>> for frame in C.itercords():
+        ...     print frame[0]
+        [-13.15221596  -6.29832411   1.11053026]
+        [-12.95758438  -6.3849206    1.09611571]
+        ... and so on
+
+        Again, note that "frame" is a dummy variable here, and you can
+        keep using C inside of the loop.  C.nextframe() is called
+        between each loop, so you can get all the standard information,
+        such as C.framen(), etc.
+        
+        """
+        for i in range(self.nframes()):
+            self.nextframe()
+            yield self
+    def iterframes(self):
+        """Iterate over frames.
+
+        See docstring of the itercords method for an explanation.
+        """
+        for i in range(self.nframes()):
+            self.nextframe()
+            yield self.frame()
+
+    
         
 ##
 ## Stuff for writing DCDs
