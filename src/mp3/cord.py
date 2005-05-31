@@ -40,7 +40,7 @@ class Cord:
             return 0
     def dcdtype(self):
         if hasattr(self, "_dcdtype"):
-            return self._dcdfreq
+            return self._dcdtype
         else:  # default value
             return "CORD"
     def dcdfreq(self):
