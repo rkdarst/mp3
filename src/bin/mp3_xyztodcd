@@ -27,6 +27,12 @@ def main():
     parser.add_option("--list", "-l", action='store_true', dest='list_inputs',
                       default=False,
                       help="Just list the inputs, don't do anything")
+    parser.add_option("--glob", "-g", action='store_true', dest='glob',
+                      default=False,
+                      help="Glob using the indicated regex")
+    parser.add_option("--dry-run", "-n", action='store_true', dest='dry_run',
+                      default=False,
+                      help="Don't actually write anything.")
 
     (options, args) = parser.parse_args()
     
@@ -45,6 +51,32 @@ def main():
         after = len(xyzs)
         info("Filtering by extension \.\d{3,}$ reduced inputs from %s to %s"%(before, after))
         mp3.functions.filename_regex["tinkerxyz"] = re.compile(r'\.(\d\d\d+)$')
+
+    if options.glob == True:
+        # This will take the directory + fileprefix from xyzs[1], glob
+        # for it in the given directories, and sort it by number.
+        #
+        #
+        dir_ = os.path.dirname(xyzs[0])
+        name = os.path.basename(xyzs[0])
+        if dir_ == "":
+            newdir = "."
+        else:
+            newdir = dir_
+
+        dirlist = os.listdir(newdir)
+        matchfile = name + "\.(\d{3,})$"
+        matchfilere = re.compile(matchfile)
+        print "matching files matching", matchfile
+        
+        dirlist = [ name for name in dirlist if matchfilere.search(name) is not None ]
+        dirlist = [ os.path.join(dir_, name) for name in dirlist ]
+        sortlist = [ (int(matchfilere.search(name).group(1)), name ) for name in dirlist ] 
+        sortlist.sort()
+
+        xyzs = dirlist
+        mp3.functions.filename_regex["tinkerxyz"] = re.compile(r'\.(\d\d\d+)$')
+
         
     # This option is for when you just want it to list what it would use,
     # after it has been filtered as per above.  This is useful for when
@@ -53,16 +85,21 @@ def main():
         print " ".join( xyzs )
         sys.exit()
 
+    if dcd[-4:] != ".dcd":
+        warn( "\n".join(["The DCD file does not have the .dcd extension.",
+                         "To prevent mistakes, that extension is required."] ))
+        sys.exit()
+
+    if options.dry_run == True:
+        sys.exit()
+
     if options.remove_inputs == True:
         really = raw_input("really remove all inputs (y/n)? [n]: ")
         if really[0] == "y" or really[0] == "Y":
             [ os.remove(x) for x in xyzs ]
             sys.exit()
 
-    if dcd[-4:] != ".dcd":
-        warn( "\n".join(["The DCD file does not have the .dcd extension.",
-                         "To prevent mistakes, that extension is required."] ))
-        sys.exit()
+
 
     # This is included if you use the -F option!!
     # mp3.functions.filename_regex["tinkerxyz"] = re.compile(r'\.(\d\d\d+)$')
