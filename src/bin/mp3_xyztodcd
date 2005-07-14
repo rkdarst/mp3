@@ -15,13 +15,17 @@ def main():
     #                  help="More information (incremental)", default=0)
     #parser.add_option("--", "-", action='', dest='',
     #                  help="")
-    parser.add_option("--arc", "-a", action='store_true', dest='arc_format', default=False,
+    parser.add_option("--arc", "-a", action='store_true', dest='arc_format',
+                      default=False,
                       help="Input is a single tinker .arc file")
-    parser.add_option("--filter", "-F", action='store_true', dest='filter_extension',default=False,
-                      help= r"Only allow files of the form ^.*\.\d{3}$")
-    parser.add_option("--remove", "-R", action='store_true', dest='remove_inputs', default=False,
+    parser.add_option("--filter", "-F", action='store_true', dest='filter_extension',
+                      default=False,
+                      help= r"Only allow files of the form ^.*\.\d{3,}$")
+    parser.add_option("--remove", "-R", action='store_true', dest='remove_inputs',
+                      default=False,
                       help="Remove the input files (useful with -F)")
-    parser.add_option("--list", "-l", action='store_true', dest='list_inputs', default=False,
+    parser.add_option("--list", "-l", action='store_true', dest='list_inputs',
+                      default=False,
                       help="Just list the inputs, don't do anything")
 
     (options, args) = parser.parse_args()
