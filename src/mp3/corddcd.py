@@ -14,7 +14,9 @@ more general commands (like dcd printing)
 class CordDCD(mp3.cord.Cord):
 
     def __init__(self, dcd=None):
-        """
+        """Create the CordDCD object.
+
+        The keyword argument 'dcd' should be the filename to read.
         """
         # This is the initilization method for a dcd-cord object.  This
         # basically lets you set the dcd when you initilize the class.
@@ -26,9 +28,9 @@ class CordDCD(mp3.cord.Cord):
     def init(self):
         """Initilize by reading in the header information.
 
-        You shouldn't need to directly call this anymore, unless you are doing
-        something wierd.  It won't hurt to call this more than once.
-        It is now called automatically by setinput().
+        You shouldn't need to directly call this anymore, unless you
+        are doing something wierd.  It won't hurt to call this more
+        than once.  It is now called automatically by setinput().
         """
         log.debug('--in corddcd.py, init()')
         if hasattr(self, '_initted') and self._initted == True:
@@ -134,8 +136,8 @@ class CordDCD(mp3.cord.Cord):
     def setdcd(self, filename):
         """Set the filename of this dcd, from a string
 
-        sets the filename (string, not file object) that we will be reading from.
-        Now, it also .init()s the dcd object
+        sets the filename (string, not file object) that we will be
+        reading from.  Now, it also .init()s the dcd object.
         """
         log.debug('---in dcd.py, setfo()')
         self._fo = file(filename,"r")
