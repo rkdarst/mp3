@@ -134,7 +134,6 @@ class Labels:
                 low = value[0]
                 high = value[1]
                 fiel = self.data.field(key)
-                print "field: ", fiel[1]
                 #new_list = [ i for i in range(natoms)
                 #             if ( self.data.field(key)[i] >= low and self.data.field(key)[i] <= high ) ]
                 new_list = [ i for i in range(natoms)
