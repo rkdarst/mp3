@@ -272,6 +272,11 @@ class CordDCD(mp3.cord.Cord):
         stores it as self.frame.  No return value.  Does not advance self.framen.
         Look at nextframe() instead.
         """
+        # We don't want to update in-place, that will cause unexpected
+        # problems which people aren't expecting, and they store old
+        # frames to see that they have been updated!
+        self._frame = numarray.zeros(shape=(self._natoms,3), type=numarray.Float32)
+
         #log.debug('---In dcd.py, get_next_frame(), self.framen=%s'%self.framen())
         self._fo.read(4)             #to save time, we won't error check this ! (or should we ?
         self._frame[:,0]= numarray.fromfile(self._fo, numarray.Float32, shape=(self._natoms,))
