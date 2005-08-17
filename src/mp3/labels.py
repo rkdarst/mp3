@@ -15,11 +15,11 @@ class Labels:
         getfrompsf() -- Gets label information from a psf
         getfrompdb() -- Gets label information from a pdb
         getfromtxyz() -- Gets labess from tinker xyz
-        findatoms() -- Easy way to make an atomlist
-        findrange() -- Easy way to make an atomlist
+        findatoms() -- Search for atoms matching given criteria
+        findrange() -- Same as findrange
         data -- Numarray record array containing actual labels.  It is
                 indexed by atomnumber, starting from zero
-            field() -- method of data which accesses fields.
+            field() -- method which accesses fields of the data array.
                 field names (atomnum stored in field index, all other
                              fields correspond to the values found in
                              the PDB/PSF/etc. ):
@@ -27,6 +27,7 @@ class Labels:
                     atomtypenum -- int   (from tinker)
                     atomname -- string4
                     charge -- float
+                    element -- string2
                     mass -- float
                     occupancy -- float
                     resname -- string4
@@ -72,20 +73,20 @@ class Labels:
         self._parsetinkerxyz(file(tinkerxyzlist[0],"r"))
 
     def findatoms(self, **keywords):
-        """This function finds atoms matching spefified conditions.
+        """This function finds atoms matching specified conditions.
 
         This method takes keyword argument(s) of the form FIELD=VALUE.
         FIELD is a fieldname of our data array, as given in the class
         docstring (help(mp3.Labels)).  
 
         VALUE can be an exact match, or a range of matches.  If VALUE
-        is a tuple of length 2, it is interperted as the range
+        is a tuple of length 2, it is interpreted as the range
         VALUE=(low, high).  The criteria is matched if
         "low <= field <= high".  If VALUE is a single object (such as
         5 or"H2"), the criteria is match if "field == VALUE".
 
         A "set" of atoms is returned which contains all atoms matching all
-        criteria.
+        criteria (an AND operator).
 
         The atoms are returned in a "set" object.  See documentation on
         the standard python module "sets" to find properties of these
