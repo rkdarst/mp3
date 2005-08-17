@@ -11,6 +11,7 @@ import numarray
 try:
     import Simplex
 except:
+    mp3.log.debug("We did not load Simplex module, CordAlign will be broken.")
     pass
 import mp3.functions
 import mp3.cord
@@ -25,28 +26,32 @@ class CordAlign(mp3.cord.Cord):
     
     Class contains:
         Methods:
-            init() -- initlization, must be called manually after proper
-                      setup done.
-            setcord() -- sets where to get the coordinates to align
-            setatoms() -- sets a possible atomlist
-            nextframe_end_hook() -- hook right before nextframe() return. 
-            
+            __init__() -- See docstring for initilization
+                          information.
+            nextframe() -- Do alignment and return the next aligned frame.
+                          Aligned frame also stored in frame() method.
+            nextframe_end_hook() -- hook right before nextframe() return.
+            averageframe() -- return average of atom positions after
+                          alignment (see docstring)
 
         Attributes:
             atomlist -- if != None, these atoms are used to do the alignment
             guess -- last guess of the minimum [x,y,z,  xangle,yangle,zangle]
             error -- error from the minimisation
             iterations -- number of iterations for last minimization
-            firstframe -- (already sliced) frame we align to (exists only
-                init() has been called)
+            aligntoframe -- Frame we align to.  Only contains the atoms we
+                     are using for aligning.
             scale -- vector like "guess", but contains the initial scale
                 of the simplex minimizer.
-            
             _rmsd()  -- rmsd-wrapper that takes a guess vector and returns
                 rmsd.  Handles slicing, too.
+
+    Note: All atomlists should be sorted before using them here.  This
+    is true in general with mp3.
     """
 
     # properties of the transformation.  We save them for efficiency.
+    # We start off with these default values.
     guess = [0,0,0, 0,0,0]
     scale = (1,1,1, .1,.1,.1)
 
@@ -54,43 +59,79 @@ class CordAlign(mp3.cord.Cord):
     #  use all atoms.
     # nextframe_end_hook is called after each frame, for the user to
     #  replace with some other function to perform some arbitrary action.
-    atomlist = None
     nextframe_end_hook = lambda x,y: True
 
-    def __init__(self, cord, atoms=None):
+    def __init__(self,
+                 cord,
+                 atomlist=None,
+                 aligntoframe=None,
+                 saveaverage=False):
         """Create the alignment object.
 
         The creation method can accept the following keyword arguments:
-        cord= -- set where to get our coordinates
-        atoms= -- If a list of atoms, use these atoms to align by.
-                  If None, align by all atoms.
-
-        If both of these keywords are given, the .init() method will be
-        called for you.
+        cord=
+            Our child Cord object, we get the coordinates to align from
+            here.
+        atomlist=
+            If a list of atoms, use these atoms to align by.  If None,
+            align by all atoms.
+        aligntoframes=
+            If this is None, then align future frames to the first frame
+            (using the given atomlist).  Otherwise, this is a frame of
+            _just_ the atoms to align by (ex: aligntoframe=
+            whole_frame[atomlist] ).  You should specify an 'atomlist'
+            consistent with this frame (same number of atoms, or None for
+            the whole frame).  
+        saveaverage=
+            If we specify True here (default False), then we will save
+            the data needed to find an average frame at some point.  See
+            the docstring the averageframe() method.
         """
-        # Set cord with the normal method if it was passed.  Set atoms if
-        # atomlist was passed.  init() if both were passed.
-        self.setcord(cord)
-        self.setatoms(atoms)
-        self.init()
-    
-    def init(self):
-        """Initializes the aligner.
+        # Set cord with the normal method if it was passed.  Set atoms
+        # if atomlist was passed.  (These came from the old
+        # .setatoms() and setcord() methods)
+        self.cord = cord
+        self.atomlist = atomlist
 
-        This must be called manually after .setcord() and .setatoms() are
-        used.
-        """
-        if self.atomlist is not None:
-            self.firstframe = self.cord.nextframe()[self.atomlist].copy()
+        self._saveaverage = saveaverage
+        if saveaverage == True:
+            self._sum_of_frames = numarray.zeros(type=numarray.Float32,
+                                                 shape=(self.cord.natoms(), 3))
+        self._sum_of_frames_count = 0
+        
+        # Some of this stuff came from the old .init() method.
+        if aligntoframe is not None:
+            # if we are given aligntoframe:
+            # test to be sure that we have the right number of atoms.
+            if self.atomlist is not None and aligntoframe.shape[0] != len(self.atomlist):
+                mp3.log.error("You specified a aligntoframe to and an atomlist.")
+                mp3.log.error(" But the frame didn't have the same number of atoms")
+                mp3.log.error(" as the atomlist, thus I don't know what to do here.")
+                mp3.log.error("The aligntoframe should already be reduced to only")
+                mp3.log.error(" include the atoms that are already in the atomlist.")
+                mp3.log.error("The error will appear later in the code.")
+            if self.atomlist is None and aligntoframe.shape[0] != self.cord.natoms():
+                mp3.log.error("You specified a aligntoframe without an atomlist,")
+                mp3.log.error(" so we default to all atoms.  But the number of atoms")
+                mp3.log.error(" in aligntoframe isn't the same as the number of atoms")
+                mp3.log.error(" in the cord.  This is wrong.")
+                mp3.log.error("The error will appear later in the code.")
+            self.aligntoframe = aligntoframe
+            # self.atomlist should already be set correctly, as per above.
         else:
-            self.firstframe = self.cord.nextframe().copy()
-        self.cord.zero_frame()
+            # if we are not given aligntoframe:
+            if self.atomlist is None:
+                self.aligntoframe = self.cord.nextframe().copy()
+            else:
+                self.aligntoframe = self.cord.nextframe()[self.atomlist].copy()
 
+        self.cord.zero_frame()
 
         ### set up our state that depends on if we have an atomlist or not
 
-        ## we either need to take a subset for the atoms, or we don't, for our rmsd function.
-        ##  I'm going to implement it as an if right here.  I hypothesize that this will take less time
+        ## we either need to take a subset for the atoms, or we don't,
+        ##  for our rmsd function.  I'm going to implement it as an if
+        ##  right here.  I hypothesize that this will take less time
         ##  than having atomlist be all of it...
 
         ##  _rmsd a a function which wraps the RMSDing of the frame.
@@ -100,53 +141,35 @@ class CordAlign(mp3.cord.Cord):
         #    self._rmsd = lambda vect, self: functions.rmsd(self.firstframe, \
         #             functions.cordtransform(self.frame, move=vect[0:3], rotate=vect[3:6] ))
 
-
-
-    def setcord(self, cord):
-        """Sets where to read our coordinates.
-
-        You must call self.init() manually.
-        """
-        self.cord = cord
-
-    def setatoms(self, atomlist=None):
-        """Specifies which atoms we want to use to align our system
-
-        Sets which atoms to align by.  If no argument is given or the argument
-        is None, align by all atoms.
-
-        You must call self.init() manually
-        """
-        self.atomlist = atomlist
-
-        
-
     def nextframe(self):
         """Return the next frame after alignment
         """
         # extract the next frame, slice it by atoms if necessary.
         frame = self.cord.nextframe()
-        if self.atomlist is not None:
-            self.curframe = frame[self.atomlist].copy()
-        else:
+        if self.atomlist is None:
             self.curframe = frame.copy()
+        else:
+            self.curframe = frame[self.atomlist].copy()
             
         # Create a wrapper function to take the msd between the two frames.
         # This is what is passed to the simplex optimizer.
-        rmsd = lambda vect: mp3.functions.rmsd(self.firstframe, \
+        rmsd = lambda vect: mp3.functions.rmsd(self.aligntoframe, \
                     mp3.functions.cordtransform(self.curframe, move=vect[0:3], rotate=vect[3:6] ))
         self.minimizer = Simplex.Simplex(rmsd, self.guess, self.scale)
         self.guess, self.error, self.iterations = self.minimizer.minimize(monitor=0)
         self._frame = mp3.functions.cordtransform(frame, move=self.guess[0:3], rotate=self.guess[3:6])
+
+        if self._saveaverage == True:
+            self._sum_of_frames += self._frame
+            self._sum_of_frames_count += 1
+
         self.nextframe_end_hook(self)
         return self._frame
-
 
     def zero_frame(self):
         """Returns to frame zero.
         """
         self.cord.zero_frame()
-        
     
     def read_n_frames(self, number):
         """Reads `number' more frames, only printing out the last one.
@@ -154,6 +177,29 @@ class CordAlign(mp3.cord.Cord):
         """
         self.cord.read_n_frames(number-1)
         return self.nextframe()
+
+    def averageframe(self):
+        """Returns the average of all so-far aligned frames.
+
+        As we go through the trajectory, we save the data needed to
+        compute the average of the whole frame.  This method returns
+        the average of all atoms' locations, in a simple numarray
+        (looks just like a normal frame).  The average is taken for
+        each atom, not just those being used to align.  Some averages
+        may not be relavent, for example if you are aligining a
+        protein in water by it's backbone (protein averages are
+        meaningful, but not for water since they are randomly
+        diffusing around).
+
+        In order to use this, you must have initilized the CordAlign
+        with saveaverage=True.
+        """
+        if self._saveaverage == True:
+            averageframe = self._sum_of_frames / self._sum_of_frames_count
+            return averageframe
+        else:
+            mp3.log.error("Cannot take average frame.  Object initilized")
+            mp3.log.error(" with saveaverage=False, so we haven't been saving data.")
 
     def __getattr__(self, attrname):
         """Wrapper for getting cord attributes.
