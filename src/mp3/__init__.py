@@ -26,6 +26,7 @@ from cordlesmod import *     # Wrapper for locally-enhanced-sampling cords.
 from cordmerge import *      # Merges multiple coordinates into a continous set
 from cordminimage import *   # Wraps coordinates to their minimum images
 from cordpdb import *        # Reads coordinates from PDBs
+from cordsimple import *     # storer coordinates in a list you can modify.
 from cordtinkerxyz import *  # Reads coordinates from Tinker XYZ files.
 from cordtinkerarc import *  # Reads coordinates from Tinker archive files.
 from cordtransform import *  # Cord transformations (move+rotate)
