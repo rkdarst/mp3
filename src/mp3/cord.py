@@ -370,6 +370,12 @@ class Cord:
         """Returns a binary (dcd) representation of the frame in self.frame."""
         thelog.debug('--in cord.py, bindcd_frame()')
         frame = self.frame()
+        # Test to be sure that we actually have a numarray, and that
+        # it is of the right size.  This is needed or else the DCD
+        # won't have the proper sized fields.  It would also catch
+        # other errors here, rather than down below.
+        if type(frame) != numarray.NumArray or frame.type() != numarray.Float32:
+            frame = numarray.asarray(frame, type=numarray.Float32)
         pad = struct.pack('i', 4 * frame.shape[0] )
         the_record = [ pad, frame[:,0].tostring(), pad,
                        pad, frame[:,1].tostring(), pad,
