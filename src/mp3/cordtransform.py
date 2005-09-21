@@ -78,7 +78,7 @@ class CordTransform(mp3.cord.Cord):
         #mp3.transform_frame_in_place(frame, self.move, self.rotate)
         self._frame = mp3.cordtransform(frame,
                                         move=self._move,
-                                        move=self._rotate)
+                                        rotate=self._rotate)
         return self._frame
 
     def zero_frame(self):
