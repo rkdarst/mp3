@@ -18,7 +18,7 @@ class CordTransform(mp3.cord.Cord):
     def init(self):
         self.cord.init()
 
-    def __init__(self, **keywords):
+    def __init__(self, cord, move=None, rotate=None):
         """Set up the transformation object.
 
         When initializing the transformation object, the keywords
@@ -26,25 +26,20 @@ class CordTransform(mp3.cord.Cord):
         translation, and rotation.  See docstring of the
         settransformation method for more information.
         """
-        if keywords.has_key("cord"):
-            self.setcord(keywords["cord"] )
-        if keywords.has_key("move"):
-            self.settransformation(move=keywords["move"] )
-        if keywords.has_key("rotate"):
-            self.settransformation(rotate=keywords["rotate"] )
-        if keywords.has_key("cord"):
-            self.init()
+        self._move = (0., 0., 0.)
+        self._rotate = (0., 0., 0.)
+        self.cord = cord
+        self.settransformation(move)
+        self.settransformation(rotate)
                                                         
     def setcord(self, cordobj):
-        """Sets what we want to get our data from.
-
-        """
-        self.cord = cordobj
-        self.cord.init()  # The cordobj can either be initilized
-                           # or not, it should not break anything
+        self.cord = cord 
 
     def settransformation(self, move=None, rotate=None):
         """Set the translation and rotation of the system.
+
+        Note: supply these arguments when instantiating the class.
+        See the __init__ method.
 
         The argument move= sets the translation, the argument rotate=
         sets the rotation.  Note that the rotation is applied first,
@@ -80,10 +75,11 @@ class CordTransform(mp3.cord.Cord):
         """
         frame = self.cord.nextframe()
         # do stuff to the frame
-        mp3.transform_frame_in_place(frame, self.move, self.rotate)
-        
-        self._frame = frame
-        return frame
+        #mp3.transform_frame_in_place(frame, self.move, self.rotate)
+        self._frame = mp3.cordtransform(frame,
+                                        move=self._move,
+                                        move=self._rotate)
+        return self._frame
 
     def zero_frame(self):
         """Returns to frame zero.
