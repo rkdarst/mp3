@@ -158,6 +158,8 @@ class CordDCD(mp3.cord.Cord):
         self._parse_header()
         self._parse_title()
         self._parse_atoms()
+        self._block_a != 0 and self._parse_unknown_block()
+        self._block_b != 0 and self._parse_unknown_block()
     
         log.debug("Parsing: %s"% self._title)    #print out some useful information
         for i in range(0,len(self._title),80):
@@ -193,7 +195,9 @@ class CordDCD(mp3.cord.Cord):
         if header1_size1 != 84 or header1_size2 !=84:
             log.error("error-- header size fields not correct (should be 84)\n")
         if self._block_a != 0 or self._block_b != 0:
-            log.error("I've found some charmm wierdness-- the alignment could be all wrong-- no corrections will be made!")
+            log.info("I've found a signal possibly indicating an extra record block")
+            log.info("    I'll try to parse it, but it might fail.  Also, I won't use")
+            log.info("    any data from them.")
     
     #########################
     def _parse_title(self):
@@ -263,6 +267,17 @@ class CordDCD(mp3.cord.Cord):
     ##        self.fo.read(4)
            
     ###########################
+
+    def _parse_unknown_block(self):
+        """This parses a block, doing nothing with it.
+        """
+        (length1, ) = struct.unpack("i", self._fo.read(4))
+        self._fo.read(length1)
+        (length2, ) = struct.unpack("i", self._fo.read(4))
+        if length1 != length2:
+            log.error("We tried to read the extra block, but it didn't work out quite right.")
+        
+
     
     def _get_next_frame(self):
         """Read in next frame, store it as self.frame.
