@@ -92,6 +92,7 @@ class CordAlign(mp3.cord.Cord):
         # .setatoms() and setcord() methods)
         self.cord = cord
         self.atomlist = atomlist
+        self._align_to_next_frame = False
 
         self._saveaverage = saveaverage
         if saveaverage == True:
@@ -119,13 +120,13 @@ class CordAlign(mp3.cord.Cord):
             self.aligntoframe = aligntoframe
             # self.atomlist should already be set correctly, as per above.
         else:
-            # if we are not given aligntoframe:
-            if self.atomlist is None:
-                self.aligntoframe = self.cord.nextframe().copy()
-            else:
-                self.aligntoframe = self.cord.nextframe()[self.atomlist].copy()
-
-        self.cord.zero_frame()
+            # if we are not given aligntoframe, so we want to align by the first frame:
+            self._align_to_next_frame = True
+            # We store it here, and then act on it on the first read.
+            # We don't want to set self.aligntoframe now, because that
+            # would require us to read forward, then back up again,
+            # which is isn't perfectly supported right now, and
+            # probably isn't the best thing to be doing anyway.
 
         ### set up our state that depends on if we have an atomlist or not
 
@@ -150,6 +151,17 @@ class CordAlign(mp3.cord.Cord):
             self.curframe = frame.copy()
         else:
             self.curframe = frame[self.atomlist].copy()
+
+        if self._align_to_next_frame == True:
+            # We wanted to align to the first frame of the DCD.  See
+            # above for an explanation.
+            if self.atomlist is None:
+                self.aligntoframe = frame.copy()
+            else:
+                self.aligntoframe = frame[self.atomlist].copy()
+            self._align_to_next_frame = False
+            
+
             
         # Create a wrapper function to take the msd between the two frames.
         # This is what is passed to the simplex optimizer.
