@@ -80,7 +80,7 @@ def set_level(level):
         mp3log.setLevel(logging.DEBUG)
     elif level == "info":
         debug("setting log level to info.")
-        mp3log.setLevel(logging.WARNING)
+        mp3log.setLevel(logging.INFO)
     elif level[0:4] == "warn":
         debug("setting log level to warn.")
         mp3log.setLevel(logging.WARN)
