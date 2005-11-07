@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import math, os, shutil, logging, sys, copy
-import profile
 import mp3 
 
 #logging.getLogger('dcdp').setLevel(logging.DEBUG)
@@ -215,6 +214,5 @@ STOP described above are run on the new value.
 """
 
 
-#profile.run('main()', 'prof')
 main()
 
