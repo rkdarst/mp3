@@ -7,7 +7,6 @@
 import numarray, math
 import re
 import mp3
-import mp3.log
 
 def pdbsystem(name):
     """Easy way to read in PDB's cord and labels.

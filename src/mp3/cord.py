@@ -10,6 +10,7 @@ import math
 import logging ; thelog = logging.getLogger('mp3')
 thelog.debug('Loading cord.py')
 import mp3.functions
+import mp3.prdistfunc
 
 class Cord:
 
@@ -152,6 +153,110 @@ class Cord:
         self._frame = mp3.cordtransform(self.frame(), move=move, rotate=rotate)
         return self._frame
 
+    def pairdistfunc(self, **keywords):
+        """Compute a pair distribution function between two sets of atoms.
+
+        This method will find the pair distribution function the
+        current frame(self.frame()).  It will return a PDFHistogram
+        instance.  You must specify the two sets of atoms of which to
+        take the PDF.  The two sets can be identical, for a PDF with
+        itself.  You must also specify the size of the system (x,y,z
+        lengths), the number of bins, and the bin width.
+
+        Note that this method only finds the PDF of a single frame.
+        You should look at the functions in FIXME for ways to automate
+        the PDFs of entire trajectories.
+        
+
+        Keywords are:  (* = required)
+        
+          * atomlist1, atomlist2: Two sets of atoms to take the pdf
+            of.  There may be overlap between the two. If atomlist2 is
+            not specified, atomlist1 will be duplicated to atomlist2.
+
+          * boxsize: tuple-like object containing (x,y,z) lengths of
+            the system.
+
+          * binwidth: the width of each bin for the histogram.
+
+          * nbins: the total number of bins in the histogram.
+            nbins*binwidth is the total range of the histogram (it
+            always starts at zero).
+
+          * dim: dimensionality of this PDF.
+
+          - volume: To specify no wrapping, use
+            boxsize=(10000.,10000.,10000.), and volume=therealvolume
+
+        For more information, look at the 'mp3.prdistfunc' module.
+        """
+        frame = self.frame()
+        binwidth = keywords["binwidth"]
+        nbins = keywords["nbins"]
+        boxsize = keywords["boxsize"]
+        dim = keywords["dim"]
+        # set atomlists, we default to using the same atomlist for both.
+        atomlist1 = keywords["atomlist1"]
+        if keywords.has_key("atomlist2"):
+            atomlist2 = keywords["atomlist1"]
+        else:
+            atomlist2 = atomlist1
+        # find volume
+        if not keywords.has_key("volume"):
+            volume = boxsize[0]*boxsize[1]*boxsize[2]
+        else:
+            volume = keywords["volume"]
+
+        # do we want to use C?
+        useC = keywords.get("useC", True)
+
+        # This loop choses if we should do the binning in C or Python.
+        if useC:
+            # Use the C module to do the binning.
+            keywords["frame"] = frame
+            keywords["atomlist1"] = atomlist1
+            keywords["atomlist2"] = atomlist2
+            return_dict = mp3.prdistfunc.cpdf_histframe(**keywords)
+            #return None
+            bins = return_dict["bins"]
+            overflows = return_dict["overflows"]
+        else:
+            # Do binning in Python.
+            bins = [0] * nbins
+            overflows = 0                # how many points are too large to count.
+            max_distance = nbins*binwidth # distance => this counts as an overflow
+            
+            # we use numarray to loop over atomlist 2.  This saves us a lot of time.
+            for atom1 in atomlist1:
+                deltas = frame[atomlist2] - frame[atom1]   # displacements
+                numarray.divide(deltas, boxsize, deltas)   # new coordinates:
+                                                           # [0,boxsize)  ->  [0,1)
+                # These lines map all points to the interval [-.5, .5)
+                shift = numarray.add(deltas, .5)           
+                numarray.floor(shift, shift)
+                numarray.subtract(deltas, shift , deltas)
+                numarray.multiply(deltas, boxsize, deltas)  # --> [-size/2, size/2 )
+                deltas *= deltas
+                deltas = numarray.sum(deltas, axis=1)
+                #print deltas
+                distances = numarray.sqrt(deltas)
+                
+                # record the data
+                for distance in distances:
+                    if distance >= max_distance:
+                        overflows += 1
+                    else:
+
+                        bins[int(distance/binwidth)] += 1
+
+        # build the return histogram
+        H = mp3.prdistfunc.PDFHistogram(bins=bins,
+                                        overflows=overflows,
+                                        volume=volume,
+                                        binwidth=binwidth,
+                                        dim=dim)
+        #H.addbins(bins, overflows=overflows)
+        return H
 #
 #   Iterators
 #
