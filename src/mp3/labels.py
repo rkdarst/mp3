@@ -35,7 +35,12 @@ class Labels:
                     segname -- string4
                     tempfactor -- float
                     unused  -- int
-      
+
+    examples:
+        list with masses of all atoms:
+        L.data.field("mass")
+
+
     """
 
     def getfrompsf(self, psfname):
