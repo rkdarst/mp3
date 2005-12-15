@@ -23,13 +23,6 @@ def pdbsystem(name):
     system.cord.nextframe()
     return system
 
-
-#
-#  The "smartsuite"
-#
-#  all of these are designed to ease the opening of files.  
-
-
 def smartsystem(*args):
     """Create a system from arbitrary input files.
 
@@ -46,20 +39,14 @@ def smartsystem(*args):
         else:
             inputs.append(i)
 
-    cords = [ ]
-    labels = [ ]
-    alreadyfoundlabels = []   # we don't want to get labels from multiple tinker files
+    cords = []
+    labels = []
     for input_ in inputs:
         type_ = whatisit(input_)
         if type_ in ("tinkerxyz", "pdb", "dcd", "tinkerarc"):
             cords.append(input_)
         if type_ == "psf":
-            labels.append(input_)
-        if type_ in ("tinkerxyz", "tinkerarc", "pbd") and not type_ in alreadyfoundlabels:
-            alreadyfoundlabels.append(type_)
-            labels.append(input_)
-    mp3.log.info("smartsystem: found %d cords, %d labels."%
-                 (len(cords), len(labels)))
+            labels.append[input_]
         
     S = mp3.System()
     if len(cords) == 0:                      # Set up all the cords
@@ -67,16 +54,9 @@ def smartsystem(*args):
     else:
         C = smartcord(cords)
         S.setcord(C)
-    for label in labels:                   # Set up all the labels
-        type_ = whatisit(label)
-        if type_ == "psf":
-            S.labels.getfrompsf(label)
-        if type_ == "pdb":
-            S.labels.getfrompdb(label)
-        if type_ in ("tinkerxyz", "tinkerarc"):
-            S.labels.getfromxyz(label)
-    #if len(labels) > 0:
-    #    print "we don't support reading in labels yet! (pester the maintainer)"
+    #for i in labels                   # Set up all the labels
+    if len(labels) > 0:
+        print "we don't support reading in labels yet! (pester the maintainer)"
 
     return S
         
@@ -446,3 +426,5 @@ def alignframetoposition(frame, atoms, position):
         frame = cordtransform(frame, rotate=antitrans)
     frame -= antimove
     return frame
+
+
