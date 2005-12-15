@@ -2,7 +2,6 @@ import logging
 thelog = logging.getLogger('mp3')
 import labels #as mp3labels
 
-import numarray
 
 class System:
 
@@ -312,48 +311,3 @@ class System:
                                                                 indexer("atomtypenum"),
                                                                 self.labels._tinkerbondlist[i]  ))
 
-    def center_of_mass(self, atomlist=None, weights=None):
-        """Calculate the center of mass of the system.
-
-        If 'atomlist' is None, use all atoms to calculate center of
-        mass.  Otherwise, atomlist must be a list containing the atoms
-        to use in calculating the center of mass.
-
-        If 'weighting' is not None, do not weight by masses, but
-        instead weight by the weighting array, which should be an
-        array with len(atomlist) atoms (Note: it is not sliced, if
-        atomlist is passed, weighting must already have the proper
-        shape)
-        """
-        # get atomlist if not passed, defaulting to all atoms.
-        if atomlist is None:
-            atomlist = range(self.natoms())
-
-        # get weighting if not passed, defaulting to masses from the
-        # labels.
-        if weights is None:
-            weights = self.labels.data.field("mass")[atomlist]
-        # get positions for our atoms
-        #   I tested this, it won't alter the original frame.
-        frame = self.cord.frame()[atomlist]
-        frame.transpose()
-        # COM = sum(r*m) / sum(m)
-        COM = numarray.sum(frame*weights, axis=1) / sum(weights)
-
-        # This code has been tested against VMD.  This is what we got.
-        # It isn't exactly on, but close enough to blame it on
-        # numerical error.  
-        #
-        # # file is 'files/apombC_278Kc_1-2ab_WRAP_last1ns.dcd'
-        # # all atoms
-        # vmd > measure center $prot weight mass
-        # 0.058566596359 0.0782859697938 -0.0550067648292
-        # >>> COM
-        # array([-0.07915176,  0.07452537, -0.04425772], type=Float32)
-        #
-        # # just a protein
-        # vmd > measure center $prot weight mass
-        # 0.782196938992 12.0635070801 -6.97437620163
-        # >>> COM
-        # array([  0.78218687,  12.06335163,  -6.97428656], type=Float32)
-        return COM
