@@ -5,7 +5,39 @@ import mp3.functions
 
 class Msder:
     """Perform mean-square calculations on coordinate data.
+
+    What is calculated is the distribution of
+       mean( (atomA_frame1 - atomA_frame2)**2 )
+    for all pairs of atomA's in 'atomlist', as a function of the
+    distance between frame1 and frame2.
+
+    This class is initilized with the keyword arguments 'cord', 'window',
+    and optionally 'atomlist'
+      cord == The coordinate object to get data from.  We begin gathering
+              data from the next frame in the object.
+      window == The maximum distance between frames to be sampled.  Units
+              are frames.
+      atomlist == list contaning which atoms to analyze.  If not given or
+              None, all atoms will be used        
+
+
+    Analysis is done 'by frame'.  When you first initilize the object,
+    no analyzes are done.  Each time you call the do_n_msd(n) method,
+    it will compare the first frame to each of the next 'window'
+    frames, tabulating data.
+    
+    Note that we get an equal amount of data for all distances, as in
+    we don't do more calculations for the short distances.  If this is
+    you goal, use the 'finish_msd_window' method after you have read
+    as many frames as you desire.
+    
+    The 'msd' method returns a numarray with the msd information.
+      msdlist[i] == separation of i frames apart.
+    Note that this means that msdlist[0] == 0, since being zero frames
+    apart mean taking the deviation of a frame with itself.
+        
     """
+    
     def __init__(self, cord, window, atomlist=None):
         """Set coordinate set and window ; load first `window' frames.
         """
@@ -32,6 +64,12 @@ class Msder:
 
     def do_n_msd(self,n=1):
         """Advance the coordinates and do n msd's.
+
+        You can use the method 'do_all_msd' to automatically do a MSD
+        calculation for an entire cord object.  It assumes that you
+        hand it a fresh cord object, with no frames read yet (it will
+        do them 'all'.)
+
         """
         for i in xrange(n):
             self._advance_frame()
