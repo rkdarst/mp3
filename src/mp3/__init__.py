@@ -32,7 +32,8 @@ from cordtinkerarc import *  # Reads coordinates from Tinker archive files.
 from cordtransform import *  # Cord transformations (move+rotate)
 from functions import *      # Useful functions
 from msder import *          # A class to aid with mean-square-deviation analyzes.
-from xst import *            # Deals with NAMD xst files (periodic box size)
+from boxsize import *        # Deals with BoxSize objects (NAMD xst files, ...)
+from prdistfunc import *     # pair distribution function utilities.
 
 
 #from xyz1 import *          # Incomplete module to read xyz coordinates
