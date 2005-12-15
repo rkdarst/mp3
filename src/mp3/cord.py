@@ -15,9 +15,9 @@ import mp3.prdistfunc
 class Cord:
 
     def __repr__(self):
-        return "{{cord object}}"
+        return "{{cord object %s atoms %s frames}}"%(self.natoms(), self.nframes())
     def __str__(self):
-        return "{{cord object}}"
+        return "{{cord object %s atoms %s frames}}"%(self.natoms(), self.nframes())
 #
 #  General Queries
 #
