@@ -19,8 +19,8 @@ class CordPDB(mp3.cord.Cord):
     def __init__(self, pdblist=None):
         """
         """
-        if dcd != None:
-            self.setpdblist(dcd)
+        if pdblist != None:
+            self.setpdblist(pdblist)
 
     def init(self):
         """Initilizes data about the PDBs.
@@ -36,7 +36,7 @@ class CordPDB(mp3.cord.Cord):
             self._initted = True
 
         # find number of frames and number of atoms
-        self._nframes = len(self.pdblist)
+        self._nframes = len(self._pdblist)
         self._framen = -1
         # number of atoms
         # we're going to count up how many lines we have
@@ -87,10 +87,10 @@ class CordPDB(mp3.cord.Cord):
         """
         """
         self._framen += 1
-        self._frame = numarray.zeros(shape=(self._natoms,3), type=numarray.Float32)
+        frame = numarray.zeros(shape=(self._natoms,3), type=numarray.Float32)
 
         ### read through the PDB, 
-        pdbfo = file(self.pdblist[self._framen], "r")
+        pdbfo = file(self._pdblist[self._framen], "r")
         while True:
             line = pdbfo.readline()
             if line[0:4] == "ATOM":   # we find the first atom line here, but
@@ -98,20 +98,24 @@ class CordPDB(mp3.cord.Cord):
                 break
         # We will always keep atomn aligned with what line we have last read.
         atomn = 0
-        while True:
-            self._frame[atomn,0] = float(line[30:38])
-            self._frame[atomn,1] = float(line[38:46])
-            self._frame[atomn,2] = float(line[46:54])
-            line = pdbfo.readline()
-            atomn += 1
-            if atomn+1 > self.natoms:
-                break    # let's be sure we get this right. when
-                         # atomn+1 == natoms, we are on the last atom.  But
-                         # we still have to go around one more time to be
-                         # sure to process the current line, thus we use the
-                         # inequality here.
-                
+        try:
+            while True:
+                frame[atomn,0] = float(line[30:38])
+                frame[atomn,1] = float(line[38:46])
+                frame[atomn,2] = float(line[46:54])
+                line = pdbfo.readline()
+                atomn += 1
+                if atomn+1 > self._natoms:
+                    break    # let's be sure we get this right. when
+                             # atomn+1 == natoms, we are on the last atom.  But
+                             # we still have to go around one more time to be
+                             # sure to process the current line, thus we use the
+                             # inequality here.
+        except:
+            print "Exception at atom %s (starting at zero), line is: \n%s"%(atomn, line)
+            raise
 
+        self._frame = frame
         return self._frame
 
 
@@ -132,17 +136,18 @@ class CordPDB(mp3.cord.Cord):
         self._framen += number-1
         return self.nextframe()
 
-    def __getattr__(self, attrname):
-        """Wrapper for getting cord attributes.
+    #def __getattr__(self, attrname):
+    #    """Wrapper for getting cord attributes.
+    #
+    #    This is a wrapper for getting things like self.nframes when you
+    #    don't have to worry about setting them yourself.  Going on the
+    #    hypothesis that most of the time these aren't changed, for
+    #    anything that you haven't defined yourself, it will pass it
+    #    through to self.cord.
+    #
+    #    Note that this could be bad in some cases!  But I'll take care
+    #    of them when I find them.
+    #    """
+    #    return self.cord.__dict__[attrname]
 
-        This is a wrapper for getting things like self.nframes when you
-        don't have to worry about setting them yourself.  Going on the
-        hypothesis that most of the time these aren't changed, for
-        anything that you haven't defined yourself, it will pass it
-        through to self.cord.
-
-        Note that this could be bad in some cases!  But I'll take care
-        of them when I find them.
-        """
-        return self.cord.__dict__[attrname]
 
