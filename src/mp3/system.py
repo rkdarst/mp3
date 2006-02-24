@@ -110,7 +110,7 @@ class System:
         Not a public method. 
         """
         thelog.debug("system.py, printpdbseq()")
-        for framen in range(0,self.cord.nframes):
+        for framen in range(0,self.cord.nframes()):
             filename = prefix + ("%.4d" % framen) + ".pdb"
 
             self.cord.nextframe()
@@ -124,7 +124,7 @@ class System:
         """
         self.output = file(name,"w")
         if not hasattr(self, "atomlist"):  #self.use_atom_subset == False:
-            for atomn in range(0, self.cord.natoms):
+            for atomn in range(0, self.cord.natoms()):
                 self._pdbline(atomn, atomn)
         else: # we are not using a subset  # self.use_atom_subset == True:
             counter = 0  # it is increased by one in the pdbline function
@@ -180,9 +180,9 @@ class System:
         output.write( "%4d" % self.labels.data.field('resnum')[atomn] )
         output.write(" "  )#icode
         output.write("   ")
-        output.write( "%8.3f" % self.cord.frame[atomn,0] )    #use "%8.3f" for proper pdb format  #xcord
-        output.write( "%8.3f" % self.cord.frame[atomn,1] ) #ycord
-        output.write( "%8.3f" % self.cord.frame[atomn,2] ) #zcord
+        output.write( "%8.3f" % self.cord.frame()[atomn,0] )    #use "%8.3f" for proper pdb format  #xcord
+        output.write( "%8.3f" % self.cord.frame()[atomn,1] ) #ycord
+        output.write( "%8.3f" % self.cord.frame()[atomn,2] ) #zcord
         output.write( "%6.2f" % self.labels.data.field('occupancy')[atomn] )     #occupancy
         output.write( "%6.2f      " % self.labels.data.field('tempfactor')[atomn] )    #tempfactor
         output.write( "%-4.4s" % self.labels.data.field('segname')[atomn] ) #segname
@@ -221,7 +221,7 @@ class System:
 
         To use it, do this:
         mysystem = mp3.system()
-        mysystem.pdbline = mysystem.pdbline_broke1
+        mysystem._pdbline = mysystem._pdbline_broke1
         """
     
         #ATOM      1  N   MET X   1      27.340  24.430   2.614  1.00  9.67      1UBQ
@@ -253,9 +253,9 @@ class System:
         output.write( "%4d" % self.labels.data.field('resnum')[atomn] ) #resnum
         output.write(" "  )#icode
         output.write("   ")
-        output.write( "%8.3f" % self.cord.frame[atomn,0] )    #use "%8.3f" for proper pdb format  #xstr
-        output.write( "%8.3f" % self.cord.frame[atomn,1] ) #ystr
-        output.write( "%8.3f" % self.cord.frame[atomn,2] ) #zstr
+        output.write( "%8.3f" % self.cord.frame()[atomn,0] )    #use "%8.3f" for proper pdb format  #xstr
+        output.write( "%8.3f" % self.cord.frame()[atomn,1] ) #ystr
+        output.write( "%8.3f" % self.cord.frame()[atomn,2] ) #zstr
         output.write( "%6.2f" % self.labels.data.field('occupancy')[atomn] )     #occupancy
         output.write( "%6.2f      " % self.labels.data.field('tempfactor')[atomn] )    #tempfactor
 
