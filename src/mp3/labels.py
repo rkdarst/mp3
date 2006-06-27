@@ -3,6 +3,9 @@ import glob
 import sets
 import numarray.records
 import logging
+import os.path
+import mp3.log
+import mp3.cm3dparse as cm3dparse
 thelog = logging.getLogger('mp3')
 
 class Labels:
@@ -290,3 +293,68 @@ class Labels:
     def _makebondlist(self):
         self._tinkerbondlist =  []
 
+
+    def readcm3dset(self, setfile):
+        mp3.log.info("in Labels.readcm3dset, loading %s"%setfile)
+        dirname = os.path.dirname(setfile)
+        natoms = 0
+        # First, read through all files once to figure out how many atoms there are.
+        setfiledata = file(setfile).read()
+        for MKW, contents in cm3dparse.iterMKWd(setfiledata):
+            if MKW != "mol_def":
+                continue
+            nmol = int(contents["nmol"])  # number of times that molecule is repeated
+            molParamFile = os.path.join(dirname, contents["mol_parm_file"])
+            topfiledata = file(molParamFile).read()
+            molNAtom = None # for debugging purposes below
+            for MKW_, contents_ in cm3dparse.iterMKWd(topfiledata):
+                if MKW_ != "mol_name_def":
+                    continue
+                molNAtom = int(contents_["natom"])
+                break
+            if molNAtom is None:
+                mp3.log.error("We didn't find mol_name_def in the topology file %s"%molParamFile)
+            mp3.log.info("Loading file %s, have %s replicates of %s atoms"%(molParamFile,
+                                                                            nmol,
+                                                                            molNAtom))
+            natoms += nmol * molNAtom
+        mp3.log.info("We have found %s atoms total in %s"%(natoms, setfile))
+        self.natoms = natoms
+
+        # Begin loading in all the other data.
+        if not hasattr(self, "data"):
+            self._makedataarray()
+        data = self.data
+        # Now, we have to iterate through all of that again.  I don't
+        # like to just copy the code from above, but I guess I'll do
+        # that.  We can streamline it since presumably it's
+        # well-behaved (has the required fields) now.
+        N = 0   # atom index we are currently on.
+        for MKW, contents in cm3dparse.iterMKWd(setfiledata):
+            #print MKW, contents
+            if MKW != "mol_def":
+                continue
+            MOL_INDEX = contents["mol_index"]
+            molParamFile = os.path.join(dirname, contents["mol_parm_file"])
+            topfiledata = file(molParamFile).read()
+            nmol = int(contents["nmol"])  # number of times that molecule is repeated
+            for i in range(nmol):
+                for MKW_, contents_ in cm3dparse.iterMKWd(topfiledata):
+                    #print MKW_, contents_
+                    if MKW_ == "mol_name_def":
+                        molNAtom = int(contents_["natom"])
+                        #ResName = contents_["mol_name"]
+                        MOL_NAME = contents_["mol_name"]
+                    if MKW_ == "atom_def":
+                        data.field("atomtype")[N] = contents_["atom_typ"]
+                        data.field("mass")[N] = float(contents_.get("mass", 0.))
+                        data.field("charge")[N] = float(contents_.get("charge", 0.))
+                        data.field("resname")[N] = contents_.get("group", "")
+                        # MOL_INDEX is a integer, but we store it as a string in the segname field.
+                        data.field("segname")[N] = MOL_INDEX
+                        # contents_["sttype"] is unused
+                        #print N
+                        molNAtom -= 1
+                        N += 1
+                    if molNAtom <= 0:
+                        break

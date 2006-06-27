@@ -495,5 +495,43 @@ class Cord:
         # outdata = outdata + pad                   
         return outdata                           
                                                  
-                                                 
-                                                 
+    def write_cm3d(self, filename, maxframes=None):
+        """Writes a CM3D file starting at the next frame.
+
+        Since we don't always know how many frames there are (if we
+        are reading from a CM3D file), we might have to handle running
+        out of frames.  If it does, it handles it gracefully.  We
+        return the number of frames that we wrote.
+        """
+        fo = file(filename, "w") # do we want to test for existance?
+        header = '# %d %d %f\n'%(self.natoms(), self.dcdfreq(), self.tstep_size() )
+        fo.write(header)
+        nframes = self.nframes()  # None if we don't know what it is.
+        frames_written = 0
+        mp3.log.debug("Preparing to write frames: nframes:%s maxframes:%s framen:%d"%
+                      (nframes, maxframes, self.framen()))
+        while True:
+            framen = self.framen()
+            if nframes:
+                if framen+1 >= nframes:
+                    mp3.log.error("\n".join(["We ran out of frames to write, exceeded nframes"]))
+                    break
+            try:
+                frame = self.nextframe()
+            except ValueError:
+                msg = "\n".join(["exceeded maximum number of frames (ValueError) at frame %s (counting"%
+                                 self._framen,
+                                 "from zero) %s frames written."%frames_written])
+                mp3.log.error(msg)
+                break
+            for line in frame:
+                #from rkddp.interact import interact ; interact()
+                fo.write("%f %f %f\n"%tuple(line))
+            fo.write("%f 0 0 0 %f 0 0 0 %f\n"%tuple(getattr(self, "_boxsize", (0,0,0))))
+            frames_written += 1
+            if maxframes:
+                maxframes -= 1
+                if maxframes <= 0: break
+            mp3.log.debug("%s frames written using write_cm3d to %s"%(frames_written, filename))
+        mp3.log.info("%s frames written using write_cm3d to %s"%(frames_written, filename))
+        return frames_written

@@ -28,7 +28,7 @@ class System:
         # things in self.labels and self.cord easily
 
         cordattr = ("frame","nextframe","framen", "natoms")
-        labelattr = ("findatoms","lab", "findrange")
+        labelattr = ("findatoms","lab", "findrange", "readcm3dset")
         try:
             if name in cordattr:
                 return getattr(self.cord, name)
