@@ -138,10 +138,10 @@ class Labels:
             # "value" should be a tuple containing (low, high),
             # inclusively.
 
+            fiel = self.data.field(key)
             if type(value) == tuple and len(value) == 2:  # we have a range match
                 low = value[0]
                 high = value[1]
-                fiel = self.data.field(key)
                 #new_list = [ i for i in range(natoms)
                 #             if ( self.data.field(key)[i] >= low and self.data.field(key)[i] <= high ) ]
                 new_list = [ i for i in range(natoms)
@@ -149,10 +149,12 @@ class Labels:
                 lists_to_intersect.append(new_list)
             else:                     # we have an exact match
                 new_list = [ i for i in range(natoms)
-                              if self.data.field(key)[i] == value ]
+                              if fiel[i] == value ]
             # End branch between exact and exact matches.
             lists_to_intersect.append(new_list)
-        atomset = sets.Set(lists_to_intersect[0] )
+        # this should be moved the built in `set`, implemented in C.
+        # But it's only in python2.4.
+        atomset = sets.Set(lists_to_intersect[0] )  
         for otherlist in lists_to_intersect[1:]:
             atomset &= sets.Set(otherlist)
         return atomset
