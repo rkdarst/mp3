@@ -283,8 +283,9 @@ class Labels:
     def _parsetinkerxyz(self, xyzfo):
         """Reads atomname and atomtype from a tinker .xyz file object
         """
-        self.natoms = int(xyzfo.readline().strip() )
-        self._makedataarray()
+        self._natoms = int(xyzfo.readline().strip() )
+        if not hasattr(self, "data"):
+            self._makedataarray()
         self._makebondlist()
         for atomn in xrange(self.natoms):
             line = xyzfo.readline()
