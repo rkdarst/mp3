@@ -3,16 +3,15 @@ thelog = logging.getLogger('mp3')
 import labels #as mp3labels
 
 
-class System:
+class System(labels.Labels):
 
     def __init__(self, psf=None, cord=None, pdb=None):
         """
         """
-        self.labels = labels.Labels()
         if psf != None:
-            self.labels.getfrompsf(psf)
+            self.getfrompsf(psf)
         if pdb != None:
-            self.labels.getfrompdb(pdb)
+            self.getfrompdb(pdb)
         if cord != None:
             self.cord = cord
             
@@ -166,23 +165,23 @@ class System:
         output.write( "ATOM  " )
         output.write( "%5d " % (fakeatomn +1) )  #atomn
 
-        output.write( "%-4.4s " % self.labels.data.field('atomname')[atomn] ) 
+        output.write( "%-4.4s " % self.data.field('atomname')[atomn] ) 
         # (above)
         # it seems that a numarray.recarray strips any tailing whitespace.
         # This natually will break the spacing of the output if you try to
         # write it right-justified.  So we can't do that.  So I will make it
         # left-justified until something better comes up.
 
-        output.write( "%-4.4s" % self.labels.data.field('resname')[atomn] )
+        output.write( "%-4.4s" % self.data.field('resname')[atomn] )
         #this is the field which should be three chars, but I illegally increase it to four
         
         output.write(" "  ) #chainid 
-        output.write( "%4d" % self.labels.data.field('resnum')[atomn] )
+        output.write( "%4d" % self.data.field('resnum')[atomn] )
         output.write(" "  )#icode
         output.write("   ")
-        output.write( "%8.3f" % self.cord.frame()[atomn,0] )    #use "%8.3f" for proper pdb format  #xcord
-        output.write( "%8.3f" % self.cord.frame()[atomn,1] ) #ycord
-        output.write( "%8.3f" % self.cord.frame()[atomn,2] ) #zcord
+        output.write( "%8.3f" % self.cord.frame[atomn,0] )    #use "%8.3f" for proper pdb format  #xcord
+        output.write( "%8.3f" % self.cord.frame[atomn,1] ) #ycord
+        output.write( "%8.3f" % self.cord.frame[atomn,2] ) #zcord
         output.write( "%6.2f" % self.labels.data.field('occupancy')[atomn] )     #occupancy
         output.write( "%6.2f      " % self.labels.data.field('tempfactor')[atomn] )    #tempfactor
         output.write( "%-4.4s" % self.labels.data.field('segname')[atomn] ) #segname
@@ -241,28 +240,28 @@ class System:
         output.write( "ATOM  " )
         output.write( "%5d " % (fakeatomn +1) )  #atomn
 
-        if len(self.labels.data.field('atomid')[atomn]) == 4:
-            output.write( "%4.4s " % self.labels.data.field('atomname')[atomn] ) #used to be atomtype  #atomtype
+        if len(self.data.field('atomid')[atomn]) == 4:
+            output.write( "%4.4s " % self.data.field('atomname')[atomn] ) #used to be atomtype  #atomtype
         else:
-            output.write( " %-3.3s " % self.labels.data.field('atomtype')[atomn] ) #used to be atomtype  #atomtype
+            output.write( " %-3.3s " % self.data.field('atomtype')[atomn] ) #used to be atomtype  #atomtype
 
 
 
-        output.write( "%-4.4s" % self.labels.data.field('resname')[atomn] )   #take the slice to ensure that it is 4 characters long  #resname
+        output.write( "%-4.4s" % self.data.field('resname')[atomn] )   #take the slice to ensure that it is 4 characters long  #resname
         output.write(" "  ) #chainid 
-        output.write( "%4d" % self.labels.data.field('resnum')[atomn] ) #resnum
+        output.write( "%4d" % self.data.field('resnum')[atomn] ) #resnum
         output.write(" "  )#icode
         output.write("   ")
-        output.write( "%8.3f" % self.cord.frame()[atomn,0] )    #use "%8.3f" for proper pdb format  #xstr
-        output.write( "%8.3f" % self.cord.frame()[atomn,1] ) #ystr
-        output.write( "%8.3f" % self.cord.frame()[atomn,2] ) #zstr
+        output.write( "%8.3f" % self.cord.frame[atomn,0] )    #use "%8.3f" for proper pdb format  #xstr
+        output.write( "%8.3f" % self.cord.frame[atomn,1] ) #ystr
+        output.write( "%8.3f" % self.cord.frame[atomn,2] ) #zstr
         output.write( "%6.2f" % self.labels.data.field('occupancy')[atomn] )     #occupancy
         output.write( "%6.2f      " % self.labels.data.field('tempfactor')[atomn] )    #tempfactor
 
         if len(self.labels.data.field('segname')[atomn]) == 4:
-            output.write( "%-4.4s" % self.labels.data.field('segname')[atomn] ) #segname
+            output.write( "%-4.4s" % self.data.field('segname')[atomn] ) #segname
         else:
-            output.write( " %3.3s" % self.labels.data.field('segname')[atomn] ) #segname
+            output.write( " %3.3s" % self.data.field('segname')[atomn] ) #segname
 
 
         output.write( "  " )  #element
