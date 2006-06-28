@@ -175,7 +175,7 @@ class Labels:
         Not a public method, check out getfrompsf() instead.
         """
         if hasattr(self, "data") == True:
-            logging.error("We already have data! ...overwriting")
+            logging.error("We already have data ...overwriting with the new stuff.")
     
     
         line = psffileobject.readline()              #read and verify the "psf" on the first line
@@ -187,10 +187,10 @@ class Labels:
         line = psffileobject.readline()              #find the NATOMS line and read it in
         while line.find("NATOM") == -1:
             line = psffileobject.readline()
-        self.natoms = int(line.split()[0])
+        self._natoms = int(line.split()[0])
     
-
-        self._makedataarray()
+        if not hasattr(self, "data"):
+            self._makedataarray()
         
         for atomn in range(0,self.natoms):
             #print atomn
