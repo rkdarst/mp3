@@ -59,6 +59,8 @@ class Labels:
     def getfrompdb(self, pdblist):
         """Loads labels from a PDB.
 
+        Loads metadata from only the first PDB given.
+
         You can pass this function a string or a list-like object. If it
         is a string, it is expanded by shell-glob rules and sorted, and
         the first element is used.  Otherwise, it must be a list-like
