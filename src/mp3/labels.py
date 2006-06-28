@@ -46,6 +46,9 @@ class Labels:
 
     """
 
+    def natoms(self):
+        return self._natoms
+
     def getfrompsf(self, psfname):
         """Loads atom information from the given psf file.
 
