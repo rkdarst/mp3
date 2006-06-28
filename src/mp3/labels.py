@@ -130,7 +130,7 @@ class Labels:
             natoms = keywords["natoms"]
             del keywords["natoms"]
         else:
-            natoms = self.natoms
+            natoms = self._natoms
 
         lists_to_intersect = []
         for key,value in keywords.iteritems():
@@ -168,7 +168,7 @@ class Labels:
         """Makes the numarray record array to store labels in.
         """
         
-        self.data = numarray.records.array(formats='a4,Int32,a4,a4,a4,Float32,Float32,Int32,Int32,Int32,a2,Int32', names='segname,resnum,resname,atomname,atomtype,charge,mass,unused,occupancy,tempfactor,element,atomtypenum', shape=self.natoms, buffer='\000'*(11*4+2)*self.natoms)
+        self.data = numarray.records.array(formats='a4,Int32,a4,a4,a4,Float32,Float32,Int32,Int32,Int32,a2,Int32', names='segname,resnum,resname,atomname,atomtype,charge,mass,unused,occupancy,tempfactor,element,atomtypenum', shape=self._natoms, buffer='\000'*(11*4+2)*self._natoms)
 
 
     def _parsepsf(self, psffileobject):
@@ -194,7 +194,7 @@ class Labels:
         if not hasattr(self, "data"):
             self._makedataarray()
         
-        for atomn in range(0,self.natoms):
+        for atomn in range(0,self._natoms):
             #print atomn
             line = psffileobject.readline()
             #fields= line.split()
@@ -275,7 +275,7 @@ class Labels:
 
 
             atomn += 1
-            if atomn+1 > self.natoms:  # bug city!
+            if atomn+1 > self._natoms:  # bug city!
                          #let's be sure we get this right. when atomn+1 = natoms,
                          # we are where we need to be to stop. But we still have to
                          # go around one more time to be sure to get the current atom.
@@ -290,7 +290,7 @@ class Labels:
         if not hasattr(self, "data"):
             self._makedataarray()
         self._makebondlist()
-        for atomn in xrange(self.natoms):
+        for atomn in xrange(self._natoms):
             line = xyzfo.readline()
             self.data.field('atomname')[atomn] = line[7:11].strip()
             self.data.field('atomtypenum')[atomn] = int(line[48:53])
@@ -325,7 +325,7 @@ class Labels:
                                                                             molNAtom))
             natoms += nmol * molNAtom
         mp3.log.info("We have found %s atoms total in %s"%(natoms, setfile))
-        self.natoms = natoms
+        self._natoms = natoms
 
         # Begin loading in all the other data.
         if not hasattr(self, "data"):
