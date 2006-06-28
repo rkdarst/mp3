@@ -282,7 +282,7 @@ class PDFHistogram:
         return self._bins
 
     def normalized_bins(self):
-        """Return (bins / volume) / total_pdf_count
+        """Return (bin * (V/dV) ) / total_pdf_count
         """
         total_pdf_count = self.total_pdf_count()
         return numarray.asarray(self._volbins / total_pdf_count)
