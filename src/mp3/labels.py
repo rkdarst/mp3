@@ -238,19 +238,20 @@ class Labels:
           #  it's more flexable (and you only have to do it once) to
           #  do it here independently
           # code copied straight from pdbcord.py
-        self.natoms = 0
+        natoms = 0
         while True:
             line = pdbfo.readline()
             if line[0:4] == "ATOM":
                 break
-        self.natoms += 1
+        natoms += 1
         while True:
             line = pdbfo.readline()
             if line[0:4] == "ATOM":
-                self.natoms += 1
+                natoms += 1
             else:
                 break
-
+            
+        self._natoms = natoms
         self._makedataarray()
         ### now that we know the number of atoms, go parse the thing
         pdbfo.seek(0)
