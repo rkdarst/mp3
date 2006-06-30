@@ -55,6 +55,8 @@ class System(labels.Labels):
 
     def setcord(self, cord):
         """Set the location to get input cordinates.
+
+        The input coordinates are found at self.cord
         """
         self.cord = cord
 
@@ -123,7 +125,7 @@ class System(labels.Labels):
         Not a public method. 
         """
         thelog.debug("system.py, printpdbseq()")
-        for framen in range(0,self.cord.nframes()):
+        for framen in range(0,self.cord.nframes):
             filename = prefix + ("%.4d" % framen) + ".pdb"
 
             self.cord.nextframe()
@@ -234,7 +236,7 @@ class System(labels.Labels):
 
         To use it, do this:
         mysystem = mp3.system()
-        mysystem._pdbline = mysystem._pdbline_broke1
+        mysystem.pdbline = mysystem.pdbline_broke1
         """
     
         #ATOM      1  N   MET X   1      27.340  24.430   2.614  1.00  9.67      1UBQ
