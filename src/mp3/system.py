@@ -8,6 +8,7 @@ class System(labels.Labels):
     def __init__(self, psf=None, cord=None, pdb=None):
         """
         """
+        self.labels = self
         if psf != None:
             self.getfrompsf(psf)
         if pdb != None:
@@ -308,7 +309,7 @@ class System(labels.Labels):
         cords = self.cord.frame()
             
         fo = file(name, "w")
-        data = self.labels.data
+        data = self.data
         fo.write("%d\n"%self.natoms())
 
 #   11  HC    -0.023194    1.941312    0.866941     6     9
