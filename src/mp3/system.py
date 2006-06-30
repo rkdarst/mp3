@@ -14,30 +14,43 @@ class System(labels.Labels):
             self.getfrompdb(pdb)
         if cord != None:
             self.cord = cord
-            
 
-    def __getattr__(self, name):
-        """Magic method to ease working with systems
-    
-        This allows the following properties to be accessed from system objects.
-        Otherwise, the user must use system.labels, or system.cord.  Note that
-        if system.cord does not exist, exceptions will be raised.
+    #def __getattr__(self, name):
+    #    """Magic method to ease working with systems
+    #
+    #    This allows the following properties to be accessed from system objects.
+    #    Otherwise, the user must use system.labels, or system.cord.  Note that
+    #    if system.cord does not exist, exceptions will be raised.
+    #    """
+    #    # So the point of this is to let you easily access some key
+    #    # things in self.labels and self.cord easily
+    #
+    #    cordattr = ("frame","nextframe","framen", "natoms")
+    #    labelattr = ("findatoms","lab", "findrange")
+    #    try:
+    #        if name in cordattr:
+    #            return getattr(self.cord, name)
+    #        if name in labelattr:
+    #            if name == "lab":
+    #                return self.labels.data
+    #            return getattr(self.labels, name)
+    #    except:
+    #        raise AttributeError
+    #    raise AttributeError
+    def natoms(self):
+        """Number of atoms.
         """
-        # So the point of this is to let you easily access some key
-        # things in self.labels and self.cord easily
-
-        cordattr = ("frame","nextframe","framen", "natoms")
-        labelattr = ("findatoms","lab", "findrange", "readcm3dset")
-        try:
-            if name in cordattr:
-                return getattr(self.cord, name)
-            if name in labelattr:
-                if name == "lab":
-                    return self.labels.data
-                return getattr(self.labels, name)
-        except:
-            raise AttributeError
-        raise AttributeError
+        if hasattr(self, "_natoms"):
+            return self._natoms
+        if hasattr(self, "cord"):
+            return self.cord.natoms()
+    #def __set_natoms(self, natoms): self.natoms = natoms
+    #natoms = property(__get_natoms, __set_natoms, None, """Get number of atoms in the system.
+    #
+    #This searches self for the attribute _natoms (this is set when
+    #PSFs or other data are read), if that is not found, it will then
+    #search self.cord for natoms.
+    #""")
 
     def setcord(self, cord):
         """Set the location to get input cordinates.
@@ -123,7 +136,7 @@ class System(labels.Labels):
         """
         self.output = file(name,"w")
         if not hasattr(self, "atomlist"):  #self.use_atom_subset == False:
-            for atomn in range(0, self.cord.natoms()):
+            for atomn in range(0, self.cord.natoms):
                 self._pdbline(atomn, atomn)
         else: # we are not using a subset  # self.use_atom_subset == True:
             counter = 0  # it is increased by one in the pdbline function
