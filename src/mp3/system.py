@@ -125,7 +125,7 @@ class System(labels.Labels):
         Not a public method. 
         """
         thelog.debug("system.py, printpdbseq()")
-        for framen in range(0,self.cord.nframes):
+        for framen in range(0,self.cord.nframes()):
             filename = prefix + ("%.4d" % framen) + ".pdb"
 
             self.cord.nextframe()
@@ -139,7 +139,7 @@ class System(labels.Labels):
         """
         self.output = file(name,"w")
         if not hasattr(self, "atomlist"):  #self.use_atom_subset == False:
-            for atomn in range(0, self.cord.natoms):
+            for atomn in range(0, self.cord.natoms()):
                 self._pdbline(atomn, atomn)
         else: # we are not using a subset  # self.use_atom_subset == True:
             counter = 0  # it is increased by one in the pdbline function
@@ -195,13 +195,14 @@ class System(labels.Labels):
         output.write( "%4d" % self.data.field('resnum')[atomn] )
         output.write(" "  )#icode
         output.write("   ")
-        output.write( "%8.3f" % self.cord.frame[atomn,0] )    #use "%8.3f" for proper pdb format  #xcord
-        output.write( "%8.3f" % self.cord.frame[atomn,1] ) #ycord
-        output.write( "%8.3f" % self.cord.frame[atomn,2] ) #zcord
-        output.write( "%6.2f" % self.labels.data.field('occupancy')[atomn] )     #occupancy
-        output.write( "%6.2f      " % self.labels.data.field('tempfactor')[atomn] )    #tempfactor
-        output.write( "%-4.4s" % self.labels.data.field('segname')[atomn] ) #segname
-        output.write( "%2.2s"% self.labels.data.field('element')[atomn] )  #element
+        output.write( "%8.3f" % self.cord.frame()[atomn,0] )    #use "%8.3f" for proper pdb format  #xcord
+        output.write( "%8.3f" % self.cord.frame()[atomn,1] ) #ycord
+        output.write( "%8.3f" % self.cord.frame()[atomn,2] ) #zcord
+        output.write( "%6.2f" % self.data.field('occupancy')[atomn] )     #occupancy
+        output.write( "%6.2f      " % self.data.field('tempfactor')[atomn] )    #tempfactor
+        output.write( "%-4.4s" % self.data.field('segname')[atomn] ) #segname
+        output.write( "%2.2s"% self.data.field('element')[atomn] )  #element
+
         output.write( "  \n" )   #charge
 
 #output.write( ( "ATOM  %s %s %s %s%s%s   %s%s%s%s%s      %s%s%s\n" % (atomserial, atomtype,resname,chainid,resnum,icode,xstr,ystr,zstr,occupancy,tempfactor,segname,element,charge))
@@ -236,7 +237,7 @@ class System(labels.Labels):
 
         To use it, do this:
         mysystem = mp3.system()
-        mysystem.pdbline = mysystem.pdbline_broke1
+        mysystem._pdbline = mysystem._pdbline_broke1
         """
     
         #ATOM      1  N   MET X   1      27.340  24.430   2.614  1.00  9.67      1UBQ
@@ -268,11 +269,11 @@ class System(labels.Labels):
         output.write( "%4d" % self.data.field('resnum')[atomn] ) #resnum
         output.write(" "  )#icode
         output.write("   ")
-        output.write( "%8.3f" % self.cord.frame[atomn,0] )    #use "%8.3f" for proper pdb format  #xstr
-        output.write( "%8.3f" % self.cord.frame[atomn,1] ) #ystr
-        output.write( "%8.3f" % self.cord.frame[atomn,2] ) #zstr
-        output.write( "%6.2f" % self.labels.data.field('occupancy')[atomn] )     #occupancy
-        output.write( "%6.2f      " % self.labels.data.field('tempfactor')[atomn] )    #tempfactor
+        output.write( "%8.3f" % self.cord.frame()[atomn,0] )    #use "%8.3f" for proper pdb format  #xstr
+        output.write( "%8.3f" % self.cord.frame()[atomn,1] ) #ystr
+        output.write( "%8.3f" % self.cord.frame()[atomn,2] ) #zstr
+        output.write( "%6.2f" % self.data.field('occupancy')[atomn] )     #occupancy
+        output.write( "%6.2f      " % self.data.field('tempfactor')[atomn] )    #tempfactor
 
         if len(self.labels.data.field('segname')[atomn]) == 4:
             output.write( "%-4.4s" % self.data.field('segname')[atomn] ) #segname
@@ -326,3 +327,48 @@ class System(labels.Labels):
                                                                 indexer("atomtypenum"),
                                                                 self.labels._tinkerbondlist[i]  ))
 
+    def center_of_mass(self, atomlist=None, weights=None):
+        """Calculate the center of mass of the system.
+
+        If 'atomlist' is None, use all atoms to calculate center of
+        mass.  Otherwise, atomlist must be a list containing the atoms
+        to use in calculating the center of mass.
+
+        If 'weighting' is not None, do not weight by masses, but
+        instead weight by the weighting array, which should be an
+        array with len(atomlist) atoms (Note: it is not sliced, if
+        atomlist is passed, weighting must already have the proper
+        shape)
+        """
+        # get atomlist if not passed, defaulting to all atoms.
+        if atomlist is None:
+            atomlist = range(self.natoms())
+
+        # get weighting if not passed, defaulting to masses from the
+        # labels.
+        if weights is None:
+            weights = self.data.field("mass")[atomlist]
+        # get positions for our atoms
+        #   I tested this, it won't alter the original frame.
+        frame = self.cord.frame()[atomlist]
+        frame.transpose()
+        # COM = sum(r*m) / sum(m)
+        COM = numarray.sum(frame*weights, axis=1) / sum(weights)
+
+        # This code has been tested against VMD.  This is what we got.
+        # It isn't exactly on, but close enough to blame it on
+        # numerical error.  
+        #
+        # # file is 'files/apombC_278Kc_1-2ab_WRAP_last1ns.dcd'
+        # # all atoms
+        # vmd > measure center $prot weight mass
+        # 0.058566596359 0.0782859697938 -0.0550067648292
+        # >>> COM
+        # array([-0.07915176,  0.07452537, -0.04425772], type=Float32)
+        #
+        # # just a protein
+        # vmd > measure center $prot weight mass
+        # 0.782196938992 12.0635070801 -6.97437620163
+        # >>> COM
+        # array([  0.78218687,  12.06335163,  -6.97428656], type=Float32)
+        return COM
