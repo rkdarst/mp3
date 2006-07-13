@@ -405,3 +405,66 @@ class Labels:
                         N += 1
                     if molNAtom <= 0:
                         break
+
+    def _guessAtomNames(self, inputfile, atomlist=None):
+        """Obsolete and never used method.
+
+        This could be used for guessing atomnames given atomtypes, but
+        it's too complicated, and the user really should compile
+        atomnames when they make the rest of it.  This was too
+        error-prone.
+        """
+        if atomlist is not None:
+            data = self.data[atomlist]
+        else:
+            data = self.data
+
+        import mp3.charmmutil # not used anywhere else: left here
+
+        Residues = mp3.charmmutil.getResidues(inputfile)
+        R2 = {}
+        lastRes = None
+        
+        for i, row in enumerate(data):
+            print i,
+            # iterates over record array instances
+            resName = row.field("resname")#.strip()
+            atomType = row.field("atomtype")#.strip()
+            print "'%s' '%s'"%(resName, atomType)
+
+            if resName != lastRes:
+                # Check the old R for consintency
+                # do a rollover, but not on the first time through
+                if i != 0:
+                    for l in R2.itervalues():
+                        l.append(l.pop(0))
+                # check for consistency-- is None the last element again?
+                for key, value in R2.iteritems():
+                    if value[-1] != None:
+                        raise "consistency error"
+                # Reset to the new R
+                R2 = Residues[resName]['atomNames']
+                lastRes = resName
+            # check if we are on the next residue (None is next in the
+            # atomName lists), but the resname is the same:
+            atomName = R2[atomType][0]
+            if atomName is None:
+                # do a rollover on all elements
+                for l in R2.itervalues():
+                    l.append(l.pop(0))
+                atomName = R2[atomType][0]
+            ##
+            R2[atomType].append(R2[atomType].pop(0)) # roll first element to the end.
+            row.setfield("atomname", atomName)
+
+        # rotate them all again:
+        for l in R2.itervalues():
+            l.append(l.pop(0))
+        # final consistency check:
+        for key, value in R2.iteritems():
+            if value[-1] != None:
+                raise "consistency error"
+
+        if atomlist is not None:
+            self.data[atomlist] = data
+
