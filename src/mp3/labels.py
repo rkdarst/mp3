@@ -303,10 +303,54 @@ class Labels:
         self._tinkerbondlist =  []
 
 
-    def readcm3dset(self, setfile):
+    def readcm3dset(self, setfile,
+                    fields=('atomtype', 'mass', 'charge', 'resname','segname')):
+        """Read in labels information from a CM3D set file.
+
+        `setfile` -- set file to read.
+
+        `fields` -- optional argument telling which fields we want to
+        store/override in the labels data.  This should be a tuple
+        with any combination of the strings 'atomtype', 'mass',
+        'charge', 'resname', 'segname', or 'atomname' in it.
+        Specifing less will slightly speed it up.
+
+        Mapping of CM3D fields --> labels fields
+        mol_index in setfile   --> segname
+        atom_typ  in topfile   --> atomtype
+        mass      in topfile   --> mass
+        charge    in topfile   --> change
+        group     in topfile   --> group
+        sttype    in topfile       (not used)
+        atomname  in topfile * --> atomname
+
+        * `atomname` is a non-standard field.  If you code it with
+          some special syntax, mess with the regular expression in
+          cm3dparse.rKW to make it detect it.
+        """
         mp3.log.info("in Labels.readcm3dset, loading %s"%setfile)
         dirname = os.path.dirname(setfile)
         natoms = 0
+
+        # Preselect and store the compiling command
+        codeLine = ""
+        if 'atomtype' in fields:
+            codeLine += 'data.field("atomtype")[N] = contents_["atom_typ"].strip() \n'
+        if 'mass' in fields:
+            codeLine += 'data.field("mass")[N] = float(contents_.get("mass", 0.)) \n'
+        if 'charge' in fields:
+            codeLine += 'data.field("charge")[N] = float(contents_.get("charge", 0.)) \n'
+        if 'resname' in fields:
+            codeLine += 'data.field("resname")[N] = contents_.get("group", "").strip() \n'
+        if 'segname' in fields:
+            # MOL_INDEX is a integer, but we store it as a string in the segname field.
+            codeLine += 'data.field("segname")[N] = MOL_INDEX \n'
+        if 'atomname' in fields:
+            codeLine += 'data.field("atomname")[N] = contents_.get("atomname", "").strip() \n'
+        # contents_["sttype"] is unused
+        print 'the code line'
+        codeLine = compile(codeLine,'<custom_command>','exec')
+        
         # First, read through all files once to figure out how many atoms there are.
         setfiledata = file(setfile).read()
         for MKW, contents in cm3dparse.iterMKWd(setfiledata):
@@ -355,13 +399,7 @@ class Labels:
                         #ResName = contents_["mol_name"]
                         MOL_NAME = contents_["mol_name"]
                     if MKW_ == "atom_def":
-                        data.field("atomtype")[N] = contents_["atom_typ"]
-                        data.field("mass")[N] = float(contents_.get("mass", 0.))
-                        data.field("charge")[N] = float(contents_.get("charge", 0.))
-                        data.field("resname")[N] = contents_.get("group", "")
-                        # MOL_INDEX is a integer, but we store it as a string in the segname field.
-                        data.field("segname")[N] = MOL_INDEX
-                        # contents_["sttype"] is unused
+                        exec codeLine
                         #print N
                         molNAtom -= 1
                         N += 1
