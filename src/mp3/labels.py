@@ -304,23 +304,30 @@ class Labels:
 
 
     def readcm3dset(self, setfile,
-                    fields=('atomtype', 'mass', 'charge', 'resname','segname')):
+                    useAtomtype=True,
+                    useResname=True,
+                    useSegname=True,
+                    useMass=True,
+                    useCharge=True,
+                    useAtomname=False,
+                    ):
         """Read in labels information from a CM3D set file.
 
         `setfile` -- set file to read.
 
-        `fields` -- optional argument telling which fields we want to
+        Fields to store: optional keyword arguments named like
+        `useAtomtype`, `useResname` tell which fields we want to
         store/override in the labels data.  This should be a tuple
         with any combination of the strings 'atomtype', 'mass',
         'charge', 'resname', 'segname', or 'atomname' in it.
         Specifing less will slightly speed it up.
 
         Mapping of CM3D fields --> labels fields
-        mol_index in setfile   --> segname
-        atom_typ  in topfile   --> atomtype
-        mass      in topfile   --> mass
+        mol_index in setfile   --> segname   (useSegname)
+        atom_typ  in topfile   --> atomtype  (useAtomtype)
+        mass      in topfile   --> mass      (etc...)
         charge    in topfile   --> change
-        group     in topfile   --> group
+        group     in topfile   --> resname
         sttype    in topfile       (not used)
         atomname  in topfile * --> atomname
 
@@ -334,18 +341,18 @@ class Labels:
 
         # Preselect and store the compiling command
         codeLine = ""
-        if 'atomtype' in fields:
+        if useAtomtype:
             codeLine += 'data.field("atomtype")[N] = contents_["atom_typ"].strip() \n'
-        if 'mass' in fields:
-            codeLine += 'data.field("mass")[N] = float(contents_.get("mass", 0.)) \n'
-        if 'charge' in fields:
-            codeLine += 'data.field("charge")[N] = float(contents_.get("charge", 0.)) \n'
-        if 'resname' in fields:
+        if useResname:
             codeLine += 'data.field("resname")[N] = contents_.get("group", "").strip() \n'
-        if 'segname' in fields:
+        if useSegname:
             # MOL_INDEX is a integer, but we store it as a string in the segname field.
             codeLine += 'data.field("segname")[N] = MOL_INDEX \n'
-        if 'atomname' in fields:
+        if useMass:
+            codeLine += 'data.field("mass")[N] = float(contents_.get("mass", 0.)) \n'
+        if useCharge:
+            codeLine += 'data.field("charge")[N] = float(contents_.get("charge", 0.)) \n'
+        if useAtomname:
             codeLine += 'data.field("atomname")[N] = contents_.get("atomname", "").strip() \n'
         # contents_["sttype"] is unused
         print 'the code line'
