@@ -257,7 +257,8 @@ class Labels:
                 break
             
         self._natoms = natoms
-        self._makedataarray()
+        if not hasattr(self, "data"):
+            self._makedataarray()
         ### now that we know the number of atoms, go parse the thing
         pdbfo.seek(0)
         while True:
