@@ -20,6 +20,8 @@ from cord import *           # Parent class for coordinate objects
 from cordalign import *      # Aligns atoms in a cord
 from cordatomslice import *  # Extract only some atoms from cord object
 from cordcenterer import *   # Translate coordinates to recenter system
+from cordcm3d import CordCM3D
+                             # CM3D cords
 from corddcd import *        # Reads DCD files
 from corddummy import *      # Example of making a wrapper for cords
 from cordlesmod import *     # Wrapper for locally-enhanced-sampling cords.
