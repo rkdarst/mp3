@@ -2,41 +2,59 @@
 
 import sys
 import mp3
+import os
 
 from optparse import OptionParser
-parser = OptionParser()  #usage="usage"
+usage = """
+
+mp3_geom input, cmd1, cmd2, cmd3 ...
+
+cmd :== d <atom1> <atom2>            # print distance
+cmd :== a <atom1> <atom2> <atom3>    # print angle
+px, py, pz                           # x, y, or z coordinates for a single atom
+p                                    # position, three coordinates
+"""
+parser = OptionParser(usage=usage)
 #parser.add_option("-x", "--xx", action="", dest="", default=""
 #                                    help="", )
+parser.add_option("-x", "--xmgrace", action='store_true', dest='xmgrace',
+                  help="Output to xmgrace")
+parser.add_option("-o", "--stdout", action="store_true", dest='stdout',
+                  help="Output to stdout")
+parser.add_option("-n", "--noout", action="store_true", dest='noout',
+                  help="No output")
 (options, args) = parser.parse_args()
 
 args = " ".join(args)
 args = args.split(',')
 commands = [ arg.split(" ") for arg in args ]
 commands = [ [x for x in command if x != ''] for command in commands ]
-print commands
+#print commands
 
 
 queries = []
-i=0
 
 for command in commands[1:]:
     if command[0][0] == "d":
-        queries.append("adistance(%s, %s)"%(command[1], command[2]))
+        queries.append("C.adistance(%s, %s)"%(command[1], command[2]))
         continue
     elif command[0][0] == "a":
-        queries.append("aangle(%s, %s, %s)"%(command[1], command[2], command[3]))
+        queries.append("C.aangle(%s, %s, %s)"%(command[1], command[2], command[3]))
         continue
     elif command[0][0:2] == "px":
-        queries.append("aposition(%s)[0]"%(command[1]))
+        queries.append("C.aposition(%s)[0]"%(command[1]))
         continue
     elif command[0][0:2] == "py":
-        queries.append("aposition(%s)[1]"%(command[1]))
+        queries.append("C.aposition(%s)[1]"%(command[1]))
         continue
     elif command[0][0:2] == "pz":
-        queries.append("aposition(%s)[2]"%(command[1]))
+        queries.append("C.aposition(%s)[2]"%(command[1]))
         continue
     elif command[0][0] == "p":
-        queries.append("aposition(%s)"%(command[1]))
+        queries.append("C.aposition(%s, asString=True)"%(command[1]))
+        continue
+    elif command[0][0] == "e":   # dihedral
+        queries.append("C.adihedral(%s,%s,%s,%s)"%(command[1],command[2],command[3],command[4]))
         continue
     else:
         print "unknown command", command 
@@ -44,7 +62,27 @@ for command in commands[1:]:
 #print queries
 
 
-
+#decide how to deal with the data.
+if options.noout != None:
+    outputhandler = "noout"
+    def nullfunc(line):
+        pass
+    output = nullfunc
+elif options.xmgrace != None:
+    outputhandler = "xmgrace"
+    class grace:
+        def __init__(self):
+            self.grace = os.popen("xmgrace -nxy -", "w")
+        def __call__(self,line):
+            #        print line
+            self.grace.write(line+'\n')
+    output = grace()
+#eif options.stdout != None:
+else:
+    outputhandler = "stdout"
+    def stdout(line):
+        print line
+    output = stdout
 
 C = mp3.smartcord(commands[0])
 if C is None:
@@ -53,9 +91,13 @@ if C is None:
     print "None of these worked:", commands[0]
     sys.exit()
     
-for i in range(C.nframes()):
-    C.nextframe()
-    print i,
-    for j in queries:
-        exec "print C.%s ,"%j
-    print 
+#for i in range(C.nframes()):
+#print queries
+queries = "("+ ",".join(queries) +",)"
+queries = compile( queries, "<>", "eval")
+#print queries
+for C in C.itercords():
+    line = eval(queries)
+    line = [ str(x) for x in line ]
+    line = str(C.framen()) + " " + " ".join(line)
+    output(line)
