@@ -341,17 +341,35 @@ class Cord:
         such as C.framen(), etc.
         
         """
-        for i in range(self.nframes()):
-            self.nextframe()
-            yield self
+        nframes = self.nframes()
+        if nframes is None:
+            while True:
+                try:
+                    self.nextframe()
+                except:
+                    return
+                yield self
+        else:
+            for i in range(self.nframes()):
+                self.nextframe()
+                yield self
     def iterframes(self):
         """Iterate over frames.
 
         See docstring of the itercords method for an explanation.
         """
-        for i in range(self.nframes()):
-            self.nextframe()
-            yield self.frame()
+        nframes = self.nframes()
+        if nframes is None:
+            while True:
+                try:
+                    self.nextframe()
+                except:
+                    return
+                yield self.frame()
+        else:
+            for i in range(self.nframes()):
+                self.nextframe()
+                yield self.frame()
 
     
         
