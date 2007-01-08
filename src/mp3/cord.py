@@ -139,6 +139,34 @@ class Cord:
         disp2 = frame[j] - frame[center]
         return math.acos(_dot(disp1, disp2) / (_norm(disp1) * _norm(disp2)))
 
+    def adihedral(self, a, b, c, d, full=True):
+        """Return the dihedral angle formed by four atoms.
+
+        The atoms a and d are on the ends, and the angles b and c form
+        the rotational axis.  If the paramater full == True (the
+        default), return the signed angle
+        """
+        cross = mp3.functions._cross
+        # This could use a bit of work still.
+        frame = self.frame()
+        a, b, c, d = frame[a], frame[b], frame[c], frame[d]
+        # general method: take two cross products to get two vectors
+        # perpindicular to the central bond axis and whose angle is
+        # the dihedral angle we are looking for.
+        p1, p2 = cross(a-b,c-b), cross(b-c, d-c)
+        angle = mp3.functions._angle(p1,p2)
+        sign = mp3.functions._mixed_product(a-b, d-c, c-b)
+        # This will return an angle in the range  -\pi < \theta < \pi
+        sign = sign/abs(sign)
+        return angle*sign
+        # This will return an angle in the range  0 < \theta < 2\pi
+        #if sign < 0:
+        #    angle = 2*math.pi - angle
+        #return angle
+
+        # This function has been tested against VMD, and gives the
+        # correct results, including the sign.
+
     def transform(self, move=None, rotate=None):
         """Transform the current frame.
 
