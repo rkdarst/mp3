@@ -476,6 +476,16 @@ class Cord:
         outdata = outdata + self._bindcd_natomrecord() 
         return outdata
 
+    def ensure_nframes(self):
+        """Ensure that nframes() will return a number.
+
+        Some cord types may not calculate nframes upon loading, since
+        it takes a while but isn't always necessary.  Calling this
+        method will ensure that nframes is set, or else it will be
+        calculated.
+        """
+        if self.nframes() == None and hasattr(self, "calcnframes"):
+            self.calcnframes()
     
     def _bindcd_firstheader(self):
         """Returns the binary first header in the dcd."""
