@@ -102,10 +102,17 @@ class Cord:
 #
 
 
-    def aposition(self,i):
+    def aposition(self,i, asString=False):
         """Return position vector of some atom.
+
+        If asString is false (default,) then return a array object.
+        Else, return a string that looks like '1.5 2.64 3.4'.
         """
-        return self.frame()[i]
+        if asString:
+            frame = self.frame()[i]
+            return "%s %s %s"%(frame[0], frame[1], frame[2])
+        else:
+            return self.frame()[i]
         
     def adistance(self, i, j):
         """Return distance between two atoms.
