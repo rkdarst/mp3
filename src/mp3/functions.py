@@ -52,9 +52,9 @@ def smartsystem(*args):
     alreadyfoundlabels = []   # we don't want to get labels from multiple tinker files
     for input_ in inputs:
         type_ = whatisit(input_)
-        if type_ in ("tinkerxyz", "pdb", "dcd", "tinkerarc"):
+        if type_ in ("tinkerxyz", "pdb", "dcd", "tinkerarc", "cm3dtrj"):
             cords.append(input_)
-        if type_ == "psf":
+        if type_ in ("psf", "cm3dset"):
             labels.append(input_)
         if type_ in ("tinkerxyz", "tinkerarc", "pbd") and not type_ in alreadyfoundlabels:
             alreadyfoundlabels.append(type_)
@@ -75,7 +75,9 @@ def smartsystem(*args):
         if type_ == "pdb":
             S.labels.getfrompdb(label)
         if type_ in ("tinkerxyz", "tinkerarc"):
-            S.labels.getfromxyz(label)
+            S.labels.getfromtxyz(label)
+        if type_ in ("cm3dset",):
+            S.labels.readcm3dset(label)
     #if len(labels) > 0:
     #    print "we don't support reading in labels yet! (pester the maintainer)"
 
@@ -106,7 +108,7 @@ def smartcord(*args):
                                             # it might be appended to
                                             # later
             lasttype = type_
-        elif type_ in ("dcd", "tinkerarc"):
+        elif type_ in ("dcd", "tinkerarc", "cm3dtrj"):
             cords.append(input_)
             lasttype = None
         else:
@@ -157,6 +159,8 @@ def _smartcord_single(name):
             return mp3.CordPDB(pdblist=name)
     if type_ in ("dcd",):
         return mp3.CordDCD(dcd=name)
+    if type_ in ("cm3dtrj",):
+        return mp3.CordCM3D(name)
 
 # filename_regex is a mapping between file types and (compiled)
 # regular expressions on the file name that tell what kind of files
@@ -169,6 +173,9 @@ filename_regex["tinkerarc"] = re.compile(r'\.arc(_\d+)?$')
 filename_regex["dcd"]       = re.compile(r'\.dcd$')
 filename_regex["pdb"]       = re.compile(r'\.pdb$')
 filename_regex["psf"]       = re.compile(r'\.psf$')
+filename_regex["cm3dset"]   = re.compile(r'\.set$')
+filename_regex["cm3dtop"]   = re.compile(r'\.top$')
+filename_regex["cm3dtrj"]   = re.compile(r'\.confp$')
 
 #mp3.functions.filename_regex["tinkerxyz"] = re.compile(r'\.(\d\d\d+)$')
 
