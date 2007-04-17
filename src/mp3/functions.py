@@ -192,13 +192,12 @@ def whatisit(filename):
     non-homogeneous or zero-length lists.
     """
     # you should SEARCH (not match) for these rexexps
-    regex = filename_regex
-    for key, value in regex.iteritems():
+    for key, value in filename_regex.iteritems():
         if type(filename) == list:
-            if regex[key].search(filename[0]) != None:
+            if value.search(filename[0]) != None:
                 return key+"list"
         else:
-            if regex[key].search(filename) != None:
+            if value.search(filename) != None:
                 #print key
                 return key
             
