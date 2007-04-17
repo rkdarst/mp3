@@ -19,7 +19,7 @@ S = mp3.System()
 S.readcm3dset("inputs/cm3dfiles/apo_wat.set")
 #profile.stop()
 print S.labels.data[:10]
-sys.exit()
+# sys.exit()
 
 # Set the protein atom names.  We read them from another psf file we
 # have, and we know that there are 2464 protein atoms.
@@ -70,6 +70,18 @@ S.cord.nextframe()
 S.cord.calcnframes()
 print "the next line should give an error and only write two frames"
 S.cord.write_cm3d("outputs/cm3d-apo-wat.confp", maxframes=11)
+
+
+
+# Test the saveFD and __init__(ensure_nframes=True) functionality.
+print "\nbeginning saveFD and __init__(ensure_nframes=True) tests:"
+C = mp3.cordcm3d.CordCM3D("inputs/cm3dfiles/apo-wat-10.confp",
+                          ensure_nframes=True, saveFD=True)
+print C.nframes()
+for x in range(10):
+    C.nextframe()
+print "done"
+
 
 
 #from rkddp.interact import interact ; interact()
