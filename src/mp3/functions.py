@@ -366,6 +366,16 @@ def normatomlist(atomlist):
 _dot = numarray.dot
 _norm = lambda x: math.sqrt(_dot(x,x))
 _angle = lambda x, y: math.acos(_dot(x, y) / (_norm(x) * _norm(y)))
+def _cross(a, b):
+    """Returns the cross product of two vectors.
+
+    This is a temporary function, using numpy.cross would be better."""
+    #assert len(a) == len(b) == 3
+    return numarray.asarray((a[1]*b[2] - a[2]*b[1],
+                             a[2]*b[0] - a[0]*b[2],
+                             a[0]*b[1] - a[1]*b[0] ))
+def _mixed_product(a,b,c):
+    return numarray.dot(a, _cross(b,c))
 
 
 def _alignatomstoorigin(atoms):
