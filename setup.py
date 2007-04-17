@@ -26,6 +26,7 @@ scripts.append('src/bin/mp3_geom')
 scripts.append('src/bin/mp3_namdawk')
 scripts.append('src/bin/mp3_xstboxsize')
 scripts.append('src/bin/mp3_xyztodcd')
+scripts.append('src/bin/mp3_interactivesystem')
 
 
 setup(name="mp3",
