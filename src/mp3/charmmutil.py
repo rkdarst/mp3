@@ -168,3 +168,38 @@ def getResidues(filename):
     return Residues
 
 
+
+def getUBrefList(filename):
+    """Parses Urey-Bradley (ub) information in the CHARMM parameter file, par*.inp, which
+    is given as the only argument to the function.
+    
+    Specifically, this function searches the ANGLE section of the CHARMM parameter file
+    and finds angles that have ub parameters.  It then creates a tuple comprised of
+    the three atom _types_ defining the angle and appends this tuple as well as its inverse
+    to a list.  It does this for each ub angle.  This list is to be used as a reference
+    list for determining which angles out of a given set should have ub interactions, which
+    is a problem that arises, e.g., when converting .psf files to .top files (see psf2top).
+
+    """
+    refUBList = []
+    fin = file(filename)
+    for line in fin:
+        if len(line.split()) >= 5:
+            if line.split()[4]=='Kub':
+                fin.readline()
+                break
+
+    for line in fin:
+        if line.find('lipids') > 0:
+            break
+        try:
+            float(line.split()[5]),float(line.split()[6])
+            cmdExecuted = True
+        except:
+            cmdExecuted = False
+            pass
+        if cmdExecuted:
+            refUBList.append((line.split()[0],line.split()[1],line.split()[2]))
+            refUBList.append((line.split()[2],line.split()[1],line.split()[0]))
+
+    return refUBList

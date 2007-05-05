@@ -182,7 +182,7 @@ def getbondlist(filename):
         for i in xrange(len(line.split())/2):
             bondlist.append((line.split()[2*i],line.split()[2*i+1]))
     
-    return nbonds,bondlist
+    return bondlist
 
 
 
