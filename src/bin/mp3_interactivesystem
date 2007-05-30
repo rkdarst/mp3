@@ -46,6 +46,6 @@ except ImportError:
     except ImportError:
         pass
     from code import interact
-    code.interact(local=locals())
+    interact(local=locals())
 else:
     interact(banner="", local=locals())
