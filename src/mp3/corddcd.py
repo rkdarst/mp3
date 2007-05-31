@@ -158,8 +158,6 @@ class CordDCD(mp3.cord.Cord):
         self._parse_header()
         self._parse_title()
         self._parse_atoms()
-        self._block_a != 0 and self._parse_unknown_block()
-        self._block_b != 0 and self._parse_unknown_block()
     
         log.debug("Parsing: %s"% self._title)    #print out some useful information
         for i in range(0,len(self._title),80):
@@ -287,6 +285,14 @@ class CordDCD(mp3.cord.Cord):
         stores it as self.frame.  No return value.  Does not advance self.framen.
         Look at nextframe() instead.
         """
+        # This parses an extra block which contians information on the
+        # system state (like box size).  I'm not sure of the format of
+        # the blocks, but there is one in front of every frame (not
+        # just at the beginning of the file).  Once I figure out the
+        # format, I'll try to do something with the data.
+        self._block_a != 0 and self._parse_unknown_block()
+        self._block_b != 0 and self._parse_unknown_block()
+
         # We don't want to update in-place, that will cause unexpected
         # problems which people aren't expecting, and they store old
         # frames to see that they have been updated!
