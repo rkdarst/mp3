@@ -3,16 +3,16 @@
 #
 #
 #
-
+import scipy.optimize,sys
 import logging ; thelog = logging.getLogger('mp3')
 thelog.debug('Loading minimage.py')
 
 import numarray
 import mp3.log
 try:
-    import Simplex
+    import scipy.optimize
 except:
-    mp3.log.debug("We did not load Simplex module, CordAlign will be broken.")
+    mp3.log.debug("We did not load scipy.optimize library, CordAlign will be broken.")
     pass
 import mp3.functions
 import mp3.cord
@@ -37,9 +37,11 @@ class CordAlign(mp3.cord.Cord):
 
         Attributes:
             atomlist -- if != None, these atoms are used to do the alignment
+            minimizer -- the minimization algorithm for the alignment
             guess -- last guess of the minimum [x,y,z,  xangle,yangle,zangle]
             error -- error from the minimisation
             iterations -- number of iterations for last minimization
+            verbose -- increse verbosity if true
             aligntoframe -- Frame we align to.  Only contains the atoms we
                      are using for aligning.
             scale -- vector like "guess", but contains the initial scale
@@ -66,7 +68,9 @@ class CordAlign(mp3.cord.Cord):
                  cord,
                  atomlist=None,
                  aligntoframe=None,
-                 saveaverage=False):
+                 saveaverage=False,
+                 minimizer="scipy:powell",
+                 verbose=False):
         """Create the alignment object.
 
         The creation method can accept the following keyword arguments:
@@ -87,6 +91,14 @@ class CordAlign(mp3.cord.Cord):
             If we specify True here (default False), then we will save
             the data needed to find an average frame at some point.  See
             the docstring the averageframe() method.
+        minimizer=
+            Specifies the minimization routine to be used in aligning the
+            structure.  The default is the direction set (powell's) method.
+            Another option is the downhill simplex (Nelder-Mead) method.
+        verbose=
+            The default state is quiet.  With verbose specified as True, information
+            from minimization routine will be output.  This includes the function value,
+            the number of iterations, and an error estimate.
         """
         # Set cord with the normal method if it was passed.  Set atoms
         # if atomlist was passed.  (These came from the old
@@ -94,6 +106,8 @@ class CordAlign(mp3.cord.Cord):
         self.cord = cord
         self.atomlist = atomlist
         self._align_to_next_frame = False
+        self.minimizer = minimizer
+        self.verbose = verbose
 
         self._saveaverage = saveaverage
         if saveaverage == True:
@@ -168,10 +182,24 @@ class CordAlign(mp3.cord.Cord):
         # This is what is passed to the simplex optimizer.
         rmsd = lambda vect: mp3.functions.rmsd(self.aligntoframe, \
                     mp3.functions.cordtransform(self.curframe, move=vect[0:3], rotate=vect[3:6] ))
-        self.minimizer = Simplex.Simplex(rmsd, self.guess, self.scale)
-        self.guess, self.error, self.iterations = self.minimizer.minimize(monitor=0)
-        self._frame = mp3.functions.cordtransform(frame, move=self.guess[0:3], rotate=self.guess[3:6])
-
+        if self.verbose:
+            dispval = 1
+        else:
+            dispval = 0
+        if self.minimizer == "scipy:powell":
+            result = scipy.optimize.fmin_powell(rmsd,self.guess,disp=dispval,full_output=1)
+            self.iterations = result[3]
+            self.funcalls = result[4]
+        elif self.minimizer == "scipy:simplex":
+            result = scipy.optimize.fmin(rmsd,self.guess,disp=dispval,full_output=1)
+            self.iterations = result[2]
+            self.funcalls = result[3]
+        else:
+            sys.stderr.write("ERROR: minimizer must be either scipy:powell or scipy:simplex")
+            sys.exit()
+        self.guess = result[0]
+        self._frame = mp3.functions.cordtransform(frame, move=self.guess[0:3],
+                                                  rotate=self.guess[3:6])
         if self._saveaverage == True:
             self._sum_of_frames += self._frame
             self._sum_of_frames_count += 1

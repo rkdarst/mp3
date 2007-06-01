@@ -254,7 +254,7 @@ def getthetalist(filename):
             thetalist.append((line.split()[3*i],line.split()[3*i+1],line.split()[3*i+2]))
 
     inFile.close()
-    return ntheta,thetalist
+    return thetalist
 
 
 
@@ -335,7 +335,7 @@ def getdihedrallist(filename):
                                  line.split()[4*i+3]))
 
     inFile.close()
-    return nphi,dihedrallist
+    return dihedrallist
 
 
 
@@ -432,7 +432,7 @@ def getimproperlist(filename):
                                  line.split()[4*i+3]))
 
     inFile.close()
-    return nimphi,improperlist
+    return improperlist
 
 
 
@@ -561,32 +561,28 @@ if __name__ == "__main__":
         filename = 'files/ubq_patched.psf'
         atomlist = getatomlist(filename,nprotatoms=1231)
         print atomlist
-        nbonds,bondlist = getbondlist(filename)
-        print 'nbonds = ',nbonds
+        bondlist = getbondlist(filename)
         print 'len(bondlist) = ',len(bondlist)
         print 'first five bonds:  '
         print bondlist[0:5]
         print 'last five bonds:  '
         print bondlist[len(bondlist)-5:len(bondlist)]        
         
-        nthetas,thetalist = getthetalist(filename)
-        print 'nthetas = ',nthetas
+        thetalist = getthetalist(filename)
         print 'len(thetalist) = ',len(thetalist)
         print 'first five thetas:  '
         print thetalist[0:5]
         print 'last five thetas:  '
         print thetalist[len(thetalist)-5:len(thetalist)]        
         
-        ndihedrals,dihedrallist = getdihedrallist(filename)
-        print 'ndihedrals = ',ndihedrals
+        dihedrallist = getdihedrallist(filename)
         print 'len(dihedrallist) = ',len(dihedrallist)
         print 'first five dihedrals:  '
         print dihedrallist[0:5]
         print 'last five dihedrals:  '
         print dihedrallist[len(dihedrallist)-5:len(dihedrallist)]        
         
-        nimpropers,improperlist = getimproperlist(filename)
-        print 'nimpropers = ',nimpropers
+        improperlist = getimproperlist(filename)
         print 'len(improperlist) = ',len(improperlist)
         print 'first five impropers:  '
         print improperlist[0:5]

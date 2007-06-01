@@ -12,7 +12,7 @@ something like this:
 If you don't want to install as root (which would be wise), you can do
 something like this:
 
-    python setup.py install --install-lib=~/sys/fakeroots/pymod --install-scripts ~/bin
+    python setup.py install --install-lib=~/pymod --install-scripts ~/bin
 
 But, the catch is that you have to have the install-lib dir in your
 PYTHONPATH.  I do this via a entry in my .bashrc file:

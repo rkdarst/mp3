@@ -3,6 +3,7 @@
 import sys
 import mp3
 import os
+import code
 
 from optparse import OptionParser
 usage = """Open input files and drop to interactive mode.
