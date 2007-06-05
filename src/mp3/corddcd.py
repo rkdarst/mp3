@@ -13,7 +13,7 @@ more general commands (like dcd printing)
 
 class CordDCD(mp3.cord.Cord):
 
-    def __init__(self, dcd=None):
+    def __init__(self, dcd):
         """Create the CordDCD object.
 
         The keyword argument 'dcd' should be the filename to read.
@@ -21,9 +21,36 @@ class CordDCD(mp3.cord.Cord):
         # This is the initilization method for a dcd-cord object.  This
         # basically lets you set the dcd when you initilize the class.
         #
-        if dcd != None:
-            self.setdcd(dcd)
-            self.init()
+        self._filename = dcd
+        self._fo = file(dcd, "r")
+
+        self._get_header()
+        self._initted = True  #make a record saying that we've been set up already
+        self._framen = -1   #THE FIRST FRAME IS FRAME 0--- just like python
+                           # BUT!!!!!!!!
+                           # the actual DCD does not contain the initial
+                           # coordinates.  So maybe this should be "one" here.
+                           # That will change lots of stuff.  I'll leave it
+                           # like this for now.  
+        # Close the file descriptor to allow more objects to be made at once
+        # Rules: - self._fo is None when it is closed
+        #        - self._fo being None means that the next frame read will
+        #          be frame zero.  Everything will need to be re-checked if
+        #          this assumption changes.
+        self._fo.close()
+        self._fo = None
+
+        self._frame = numarray.zeros(shape=(self._natoms,3), type=numarray.Float32)
+
+    def _openfo(self):
+        """Re-open the file object which is curretly closed.
+
+        Seeks to the very beginning of 
+        """
+        if self._fo != None:
+            mp3.log.error("Re-opening file object when it was not previously closed")
+        self._fo = file(self._filename, "r")
+        self._fo.seek(116 + len(self._title) ) # calculated in zero_frame
 
     def init(self):
         """Initilize by reading in the header information.
@@ -33,18 +60,6 @@ class CordDCD(mp3.cord.Cord):
         than once.  It is now called automatically by setinput().
         """
         log.debug('--in corddcd.py, init()')
-        if hasattr(self, '_initted') and self._initted == True:
-            return None
-        self._get_header()
-        self._initted = True  #make a record saying that we've been set up already
-        self._framen = -1   #THE FIRST FRAME IS FRAME 0--- just like python
-                           # BUT!!!!!!!!
-                           # the actual DCD does not contain the initial
-                           # coordinates.  So maybe this should be "one" here.
-                           # That will change lots of stuff.  I'll leave it
-                           # like this for now.  
-
-        self._frame = numarray.zeros(shape=(self._natoms,3), type=numarray.Float32)
 
 
     ##def load(self):
@@ -58,6 +73,8 @@ class CordDCD(mp3.cord.Cord):
         loads the next frame in self.frame . Hides details about wheter
         or not the dcd has been loaded into memory
         """
+        if self._fo == None:
+            self._openfo()
         #log.debug('--In dcd.py, nextframe()')
         #if self.initted == 0:
         #    thelog.critical("init it first! I won't do it here to save time...")
@@ -72,7 +89,6 @@ class CordDCD(mp3.cord.Cord):
         ##    self.frame = self.data[self.framen]
         ##    return self.frame
         self._get_next_frame()
-        self._framen += 1
         return self._frame
 
     def read_n_frames(self, ntoread):
@@ -86,6 +102,8 @@ class CordDCD(mp3.cord.Cord):
         Note that it might just skip the data for speed issues, it need not
         concern you.
         """
+        if self._fo == None:
+            self._openfo()
         #log.debug('--In dcd.py, read_n_frames()')
         # note that this has to accomodate both the cases where you
         # have already loaded it all into memory and where you are
@@ -108,13 +126,14 @@ class CordDCD(mp3.cord.Cord):
         self._fo.seek( (self._natoms*4 + 8 )*3*ntoskip, 1 )  #seek, whence=1 ==> seek from current position
         self._framen += ntoskip
         self._get_next_frame()
-        self._framen += 1
         return self._frame
 
     def zero_frame(self):
         """makes it where the next frame returned is 0. This function itself
         does not return anything.
         """
+        if self._fo == None:
+            self._openfo()
         log.debug('---In dcd.py, zero_frame(). self.framen=%s'%self.framen())
         ##if self.loadedinmem == 1:
         ##    thelog.debug("dcd.py, zero_frame(), it's loaded in mem so just resetting framen")
@@ -122,26 +141,23 @@ class CordDCD(mp3.cord.Cord):
         ##else:
         log.debug("dcd.py, zero_frame(), resetting file object and framen")
         self._framen = -1
-            #self.fo.seek(0)     #we have to seek past the header somehow.
-            #(combined below)    #but actual header size varries with the length
-                                 #of the title. So I'll do a quick calculation to see
-                                 #how much we have to skip. It's ugly, but it works.
-                                 #
-                                 #84 + 8 = 92 bytes for the first header
-                                 #len(title) + 12 for the lenght of the title header
-                                 #12 bytes for the lenght of the atom num header
-                                 #total = 116 + len(title)
-        self._fo.seek(116 + len(self._title) ) #seek from beginning of the file
+        self._fo.close()
+        self._fo = None
+        # All of the below is not needed-- when self._fo is None, it will be re-opened
+        # at frame zero on the next read.
+        #    #self.fo.seek(0)     #we have to seek past the header somehow.
+        #    #(combined below)    #but actual header size varries with the length
+        #                         #of the title. So I'll do a quick calculation to see
+        #                         #how much we have to skip. It's ugly, but it works.
+        #                         #
+        #                         #84 + 8 = 92 bytes for the first header
+        #                         #len(title) + 12 for the lenght of the title header
+        #                         #12 bytes for the lenght of the atom num header
+        #                         #total = 116 + len(title)
+        #self._fo.seek(116 + len(self._title) ) #seek from beginning of the file
 
     def setdcd(self, filename):
-        """Set the filename of this dcd, from a string
-
-        sets the filename (string, not file object) that we will be
-        reading from.  Now, it also .init()s the dcd object.
-        """
-        log.debug('---in dcd.py, setfo()')
-        self._fo = file(filename,"r")
-        self.init()
+        raise Exception, "don't use .setdcd() anymore, use CordDCD(dcd=dcdfilename)"
         
 
 ##
@@ -222,9 +238,6 @@ class CordDCD(mp3.cord.Cord):
             log.error("ending blocksize on the title block is not correct !\n")
         self._title = title
     
-    ######################################
-    
-    ###########################
     def _parse_atoms(self):
         """Parses in the natoms record.
 
@@ -239,42 +252,17 @@ class CordDCD(mp3.cord.Cord):
         if blocksize != 4 or blocksize2 != 4:
             log.error("blocksizes in the number of atoms record is broken\n")
         
-    
-    ##########################
-    
-    ##def load_vectors(self):
-    ##    thelog.debug('--In dcd.py, load_vectors()')
-    ##    ##
-    ##    ##Parse the coordinate/velocity fields
-    ##    ##
-    ##    #I won't go into the format again.
-    ##
-    ##    #  here is the plan. Make a array that is big enough for all of the data that we will get,
-    ##    # then assign the right values to slices of the array
-    ##
-    ##    self.data = numarray.zeros(shape=(self.nframes,self.natoms,3), type=numarray.Float32)     #define the data array
-    ##
-    ##    for framen in range(0,self.nframes):
-    ##        #for coordinate in (0,1,2):
-    ##        self.fo.read(4)             #to save time, we won't error check this ! (or should we ?
-    ##        self.data[framen,:,0] = numarray.fromfile(self.fo, numarray.Float32, shape=(self.natoms,))
-    ##        self.fo.read(8)
-    ##        self.data[framen,:,1] = numarray.fromfile(self.fo, numarray.Float32, shape=(self.natoms,))
-    ##        self.fo.read(8)
-    ##        self.data[framen,:,2] = numarray.fromfile(self.fo, numarray.Float32, shape=(self.natoms,))
-    ##        self.fo.read(4)
-           
-    ###########################
-
-    def _parse_unknown_block(self):
+    def _parse_unknown_block(self, mode=None):
         """This parses a block, doing nothing with it.
         """
         (length1, ) = struct.unpack("i", self._fo.read(4))
-        self._fo.read(length1)
+        data = self._fo.read(length1)
         (length2, ) = struct.unpack("i", self._fo.read(4))
         if length1 != length2:
             log.error("We tried to read the extra block, but it didn't work out quite right.")
-        
+        if mode:
+            values = struct.unpack(mode, data)
+            return values
 
     
     def _get_next_frame(self):
@@ -286,12 +274,17 @@ class CordDCD(mp3.cord.Cord):
         Look at nextframe() instead.
         """
         # This parses an extra block which contians information on the
-        # system state (like box size).  I'm not sure of the format of
-        # the blocks, but there is one in front of every frame (not
-        # just at the beginning of the file).  Once I figure out the
-        # format, I'll try to do something with the data.
-        self._block_a != 0 and self._parse_unknown_block()
-        self._block_b != 0 and self._parse_unknown_block()
+        # system state (like box size).
+        if self._block_a != 0:
+            # This block contains things like blocksize.  I have
+            # deduced that it is six little-endian doubles.  An
+            # example of what it contians is:
+            # (49.164026480761265, 0.0, 43.911723710010705, 0.0, 0.0, 45.640402761851782)
+            # This is the boxsize.  Since I'm not sure exactly what it
+            # contians, I'm not trying to make use of it now, but you
+            # can extract the data from ._block_a_values if you like.
+            self._block_a_values = self._parse_unknown_block("<dddddd")
+            #print values
 
         # We don't want to update in-place, that will cause unexpected
         # problems which people aren't expecting, and they store old
@@ -306,3 +299,12 @@ class CordDCD(mp3.cord.Cord):
         self._fo.read(8)
         self._frame[:,2] = numarray.fromfile(self._fo, numarray.Float32, shape=(self._natoms,))
         self._fo.read(4)
+
+        # I still don't know what this block would be.
+        self._block_b != 0 and self._parse_unknown_block()
+
+        self._framen += 1
+        if self._framen == self._nframes - 1:
+            self._fo.close()
+            self._fo = None
+            
