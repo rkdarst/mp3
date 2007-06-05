@@ -61,13 +61,6 @@ class CordDCD(mp3.cord.Cord):
         """
         log.debug('--in corddcd.py, init()')
 
-
-    ##def load(self):
-    ##    """load the entire dcd into memory"""
-    ##    thelog.debug('--In dcd.py, load()')
-    ##    #self.init()   #if it's already initted, it'll catch itself. 
-    ##    self.load_vectors()
-
     def nextframe(self):
         """Loads the next frame into self.
         loads the next frame in self.frame . Hides details about wheter
@@ -75,19 +68,10 @@ class CordDCD(mp3.cord.Cord):
         """
         if self._fo == None:
             self._openfo()
-        #log.debug('--In dcd.py, nextframe()')
-        #if self.initted == 0:
-        #    thelog.critical("init it first! I won't do it here to save time...")
-        #    return
-        #thelog.info('make a better solution for this...')
         if self._framen >= self._nframes-1:  #if there are 10 frames total, framen can not be
                                            #more than 9. So stoup if framen >= nframes -1
              log.critical("tried to read more frames than there were. BAILING OUT!!")
              return None
-        ##if hasattr(self, 'data'):
-        ##    self.framen += 1
-        ##    self.frame = self.data[self.framen]
-        ##    return self.frame
         self._get_next_frame()
         return self._frame
 
@@ -104,24 +88,9 @@ class CordDCD(mp3.cord.Cord):
         """
         if self._fo == None:
             self._openfo()
-        #log.debug('--In dcd.py, read_n_frames()')
-        # note that this has to accomodate both the cases where you
-        # have already loaded it all into memory and where you are
-        # reading it frame-by-frame. You could either call self.nextframe()
-        # the right number of times, or look at which case it is and optimize
-        # for the skipping. I'll do the optimized method (though I'm sure
-        # that it makes very little difference. _very_. )
-        # 
-        # I'm also violating a fundamental rule of python by not combining
-        # this function with the one above, but I'll ignore that for now.
-        # 
-        # Update: if we did it by calling self.next_frame() repeatedley,
-        # we could make this part of the generalized dcd class
         ntoread = int(ntoread)
         if self._framen + ntoread > self._nframes - 1:   #can't read more than we have
             log.critical("tried to read more frames than there are!")
-
-#I'll advance the dcd file by the right amount
         ntoskip = ntoread-1
         self._fo.seek( (self._natoms*4 + 8 )*3*ntoskip, 1 )  #seek, whence=1 ==> seek from current position
         self._framen += ntoskip
@@ -135,10 +104,6 @@ class CordDCD(mp3.cord.Cord):
         if self._fo == None:
             self._openfo()
         log.debug('---In dcd.py, zero_frame(). self.framen=%s'%self.framen())
-        ##if self.loadedinmem == 1:
-        ##    thelog.debug("dcd.py, zero_frame(), it's loaded in mem so just resetting framen")
-        ##    self.framen = -1    #we don't have to deal with any file rewinding here
-        ##else:
         log.debug("dcd.py, zero_frame(), resetting file object and framen")
         self._framen = -1
         self._fo.close()
