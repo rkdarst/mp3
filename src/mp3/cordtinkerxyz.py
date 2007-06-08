@@ -6,8 +6,7 @@
 import logging ; thelog = logging.getLogger('mp3')
 thelog.debug('Loading pdbcord.py')
 import glob
-import numarray
-import numarray
+import numpy
 import mp3.cord
 
 
@@ -69,7 +68,7 @@ class CordTinkerXYZ(mp3.cord.Cord):
         """
         """
         self._framen += 1
-        frame = numarray.zeros(shape=(self._natoms,3), type=numarray.Float32)
+        frame = numpy.zeros(shape=(self._natoms,3), dtype=numpy.float32)
 
         ### read through the PDB, 
         xyzfo = file(self._xyzlist[self._framen], "r")

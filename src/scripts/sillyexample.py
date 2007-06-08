@@ -1,5 +1,5 @@
 
-import mp3, sys, numarray
+import mp3, sys, numpy
 
 
 # Here is some argument parsing, but "optparse" (standard library in 2.3)
@@ -63,7 +63,7 @@ print "---"
 
 
 #
-# That way was rather slow. I'd prefer to use numarrays to do it all.
+# That way was rather slow. I'd prefer to use numpy arrays to do it all.
 #
 #
 #
@@ -71,10 +71,10 @@ print "---"
 
 for i in range(5,10):
     mols.cord.nextframe()
-    sum = numarray.zeros(shape=(3), type=numarray.Float32)       # "sum" is a numarray
+    sum = numpy.zeros(shape=(3), dtype=numpy.float32)       # "sum" is a numpy array
     for atomnumber in atoms_to_analyze:  
-        sum += mols.cord.frame[atomnumber]         #add a numarray to another numarray !
+        sum += mols.cord.frame[atomnumber]         #add a numpy array to another numpy array !
     print "Frame %d: center: %s"%(i, sum/n_atoms_to_analyze)
-                                      #the numarray gets automatically converted to a string
+                                      #the numpy array gets automatically converted to a string
 
 #now wasn't THAT elegent ?

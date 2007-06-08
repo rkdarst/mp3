@@ -1,4 +1,4 @@
-import numarray
+import numpy
 import mp3
 
 s = mp3.system()
@@ -19,10 +19,10 @@ goodatoms = s.cord.frame[atoms]
 minatoms = goodatoms.argmin(axis=0)
 maxatoms = goodatoms.argmax(axis=0)
 
-boxmin = numarray.asarray( [ goodatoms[minatoms[i],i] for i in (0,1,2) ] )
-boxmax = numarray.asarray( [ goodatoms[maxatoms[i],i] for i in (0,1,2) ] )
+boxmin = numpy.asarray( [ goodatoms[minatoms[i],i] for i in (0,1,2) ] )
+boxmax = numpy.asarray( [ goodatoms[maxatoms[i],i] for i in (0,1,2) ] )
 
-numarray.add(boxmin, -10, boxmin )
-numarray.add(boxmax,  10, boxmax )
+numpy.add(boxmin, -10, boxmin )
+numpy.add(boxmax,  10, boxmax )
 
 print boxmin, boxmax

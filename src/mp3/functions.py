@@ -4,8 +4,9 @@
 #
 #
 
-import numarray, math
+import math
 import re
+import numpy
 import mp3
 import mp3.log
 
@@ -211,8 +212,8 @@ def rmsd(frame1, frame2):
     ## find the displacement for each coordinate
     disp = frame1 - frame2
     ##find squared displacement
-    numarray.multiply(disp, disp, disp)
-    sd = numarray.sum(disp, axis=1)    # "squared displacement"
+    numpy.multiply(disp, disp, disp)
+    sd = numpy.sum(disp, axis=1)    # "squared displacement"
     ## mean squared displacement, etc.
     msd = sd.sum() / len(sd)
     rmsd = math.sqrt(msd)
@@ -262,12 +263,13 @@ def cordtransform(frame, move=None, rotate=None):
         ##
         ##
 
-        rmatrix = numarray.matrixmultiply( numarray.matrixmultiply( xmatrix, ymatrix ), zmatrix)
-        frame = numarray.matrixmultiply(frame, rmatrix)
+        mm = numpy.dot # matrix multiply
+        rmatrix = mm( mm( xmatrix, ymatrix ), zmatrix)
+        frame = mm(frame, rmatrix)
 
     ## Move the frame.
     if move != None:
-        numarray.add(frame, move, frame)
+        numpy.add(frame, move, frame)
 
     return frame
     
@@ -363,7 +365,7 @@ def normatomlist(atomlist):
     return atomlist
 
 # Vector functions
-_dot = numarray.dot
+_dot = numpy.dot
 _norm = lambda x: math.sqrt(_dot(x,x))
 _angle = lambda x, y: math.acos(_dot(x, y) / (_norm(x) * _norm(y)))
 def _cross(a, b):
@@ -371,11 +373,11 @@ def _cross(a, b):
 
     This is a temporary function, using numpy.cross would be better."""
     #assert len(a) == len(b) == 3
-    return numarray.asarray((a[1]*b[2] - a[2]*b[1],
-                             a[2]*b[0] - a[0]*b[2],
-                             a[0]*b[1] - a[1]*b[0] ))
+    return numpy.asarray((a[1]*b[2] - a[2]*b[1],
+                          a[2]*b[0] - a[0]*b[2],
+                          a[0]*b[1] - a[1]*b[0] ))
 def _mixed_product(a,b,c):
-    return numarray.dot(a, _cross(b,c))
+    return numpy.dot(a, _cross(b,c))
 
 
 def _alignatomstoorigin(atoms):
@@ -388,8 +390,8 @@ def _alignatomstoorigin(atoms):
     return (move, translist), the movement and rotations needed to bring
     about this transformation.
     """
-    asarray = numarray.asarray
-    M = asarray(atoms, type=numarray.Float32).copy()
+    asarray = numpy.asarray
+    M = asarray(atoms, dtype=numpy.float32).copy()
     move = None      # What we are going to return
     translist = []   #
 
@@ -458,7 +460,7 @@ def alignframetoposition(frame, atoms, position):
 
     antimove, antitranslist = _alignatomstoorigin(atoms=position)
     antitranslist.reverse()
-    antitranslist = [ -numarray.asarray(x) for x in antitranslist ]
+    antitranslist = [ -numpy.asarray(x) for x in antitranslist ]
     for antitrans in antitranslist:
         frame = cordtransform(frame, rotate=antitrans)
     frame -= antimove

@@ -1,6 +1,6 @@
 import logging ; thelog = logging.getLogger('mp3')
 thelog.debug('Loading minimage.py')
-import numarray
+import numpy
 import mp3.cord
 """This module does basic min
 
@@ -49,14 +49,14 @@ class CordCenterer(mp3.cord.Cord):
     def setweights(self, weights):
         """Tells it which atoms you want center.
 
-        Pass this method a (n,) numarray listing the relative weights of the atoms,
+        Pass this method a (n,) numpy listing the relative weights of the atoms,
         and this will translate the thing such that the center of mass of these
         atoms is at the origin.
         """
         # I call it weights because it is the relative weights of the atoms, not
         #  because I'm confusing weight and mass
         self.weights = weights
-        self.totalweight = numarray.sum(weights)
+        self.totalweight = numpy.sum(weights)
         
 
     def nextframe(self):
@@ -65,10 +65,10 @@ class CordCenterer(mp3.cord.Cord):
         #          disp[0] -= (floorf((disp[0]/cstate->boxsize[0])+.5)/*-.5*/ ) * cstate->boxsize[0];
         frame = self.cord.nextframe().copy() #don't want to mess up the trasposing
         frame.transpose()
-        newframe = numarray.multiply(frame, self.weights)
-        sums = numarray.sum(newframe, axis=1)
-        numarray.divide(sums, self.totalweight, sums)
-        frame = numarray.subtract(self.cord.frame, sums)
+        newframe = numpy.multiply(frame, self.weights)
+        sums = numpy.sum(newframe, axis=1)
+        numpy.divide(sums, self.totalweight, sums)
+        frame = numpy.subtract(self.cord.frame, sums)
         self._frame = frame
         return self._frame
 

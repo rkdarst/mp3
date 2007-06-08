@@ -6,8 +6,7 @@
 import logging ; thelog = logging.getLogger('mp3')
 thelog.debug('Loading pdbcord.py')
 import glob
-import numarray
-import numarray
+import numpy
 import mp3.cord
 
 
@@ -73,7 +72,7 @@ class CordPDB(mp3.cord.Cord):
 
         # first off, set self.pdblist to be the list of pdbs we get our
         # data from
-        if type(pdblist) == str:
+        if isinstance(pdblist, str):
             pdblist = glob.glob(pdblist)
             pdblist.sort()
             self._pdblist = pdblist
@@ -87,7 +86,7 @@ class CordPDB(mp3.cord.Cord):
         """
         """
         self._framen += 1
-        frame = numarray.zeros(shape=(self._natoms,3), type=numarray.Float32)
+        frame = numpy.zeros(shape=(self._natoms,3), dtype=numpy.float32)
 
         ### read through the PDB, 
         pdbfo = file(self._pdblist[self._framen], "r")

@@ -5,7 +5,7 @@
 
 
 import string, struct
-import numarray
+import numpy
 import math
 import logging ; thelog = logging.getLogger('mp3')
 thelog.debug('Loading cord.py')
@@ -120,7 +120,7 @@ class Cord:
         """
         dist_v = self.frame()[i] - self.frame()[j]
         #print self.frame()
-        dist_v = numarray.multiply(dist_v, dist_v)
+        dist_v = numpy.multiply(dist_v, dist_v)
         dist = dist_v.sum()
         return math.sqrt(dist)
         
@@ -131,7 +131,7 @@ class Cord:
 
         # These functions were taken from mp3.functions.  You would
         # probably want to keep them syncronized in both places.
-        _dot = numarray.dot
+        _dot = numpy.dot
         _norm = lambda x: math.sqrt(_dot(x,x))
 
         frame = self.frame()
@@ -261,20 +261,20 @@ class Cord:
             overflows = 0                # how many points are too large to count.
             max_distance = nbins*binwidth # distance => this counts as an overflow
             
-            # we use numarray to loop over atomlist 2.  This saves us a lot of time.
+            # we use numpy to loop over atomlist 2.  This saves us a lot of time.
             for atom1 in atomlist1:
                 deltas = frame[atomlist2] - frame[atom1]   # displacements
-                numarray.divide(deltas, boxsize, deltas)   # new coordinates:
+                numpy.divide(deltas, boxsize, deltas)   # new coordinates:
                                                            # [0,boxsize)  ->  [0,1)
                 # These lines map all points to the interval [-.5, .5)
-                shift = numarray.add(deltas, .5)           
-                numarray.floor(shift, shift)
-                numarray.subtract(deltas, shift , deltas)
-                numarray.multiply(deltas, boxsize, deltas)  # --> [-size/2, size/2 )
+                shift = numpy.add(deltas, .5)           
+                numpy.floor(shift, shift)
+                numpy.subtract(deltas, shift , deltas)
+                numpy.multiply(deltas, boxsize, deltas)  # --> [-size/2, size/2 )
                 deltas *= deltas
-                deltas = numarray.sum(deltas, axis=1)
+                deltas = numpy.sum(deltas, axis=1)
                 #print deltas
-                distances = numarray.sqrt(deltas)
+                distances = numpy.sqrt(deltas)
                 
                 # record the data
                 for distance in distances:
@@ -539,12 +539,12 @@ class Cord:
         """Returns a binary (dcd) representation of the frame in self.frame."""
         thelog.debug('--in cord.py, bindcd_frame()')
         frame = self.frame()
-        # Test to be sure that we actually have a numarray, and that
+        # Test to be sure that we actually have a numpy array, and that
         # it is of the right size.  This is needed or else the DCD
         # won't have the proper sized fields.  It would also catch
         # other errors here, rather than down below.
-        if type(frame) != numarray.NumArray or frame.type() != numarray.Float32:
-            frame = numarray.asarray(frame, type=numarray.Float32)
+        if type(frame) != numpy.ndarray or frame.dtype != numpy.float32:
+            frame = numpy.asarray(frame, dtype=numpy.float32)
         pad = struct.pack('i', 4 * frame.shape[0] )
         the_record = [ pad, frame[:,0].tostring(), pad,
                        pad, frame[:,1].tostring(), pad,

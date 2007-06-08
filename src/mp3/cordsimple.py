@@ -14,7 +14,7 @@ class CordSimple(mp3.cord.Cord):
     these limitations with a very simple interface.
 
     All data is stored in a list (CordSimple.all_frames).  Each
-    element of the list is a numarray representing one frame.  Element
+    element of the list is a numpy array representing one frame.  Element
     zero is frame zero, etc.  You may manipulate this list hovever you
     wish.  Note that there is not much error checking, so it won't
     complain if your frames in the list don't have the same number of

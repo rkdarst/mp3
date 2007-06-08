@@ -1,12 +1,11 @@
 import math
-import numarray
+import numpy
 
 import mp3.cord
 import mp3.functions
 """This does un-wrapping of LES'ed cord objects.
 
 LES = locally enhanced sampling
-
 
 """
 
@@ -183,7 +182,7 @@ class CordLESMod(mp3.cord.Cord):
         # enough to hold all the LES replicates.  Instead, we use it to
         # only hold the non-replicated atoms.  Then, we copy it multiple
         # times into an array that is big enough to hold all the replicates
-        frame = numarray.zeros((self.natoms(), 3), type=numarray.Float32)
+        frame = numpy.zeros((self.natoms(), 3), dtype=numpy.float32)
 
         # Iterate through leslist, using "break" to escape.
         while True: 
@@ -211,8 +210,8 @@ class CordLESMod(mp3.cord.Cord):
 
         # This array is big enough to hold all replicates, atoms,
         # and coordinates
-        frames = numarray.zeros((numreplicates, self.natoms(), 3),
-                                type=numarray.Float32)
+        frames = numpy.zeros((numreplicates, self.natoms(), 3),
+                             dtype=numpy.float32)
 
         for i in range(numreplicates):
             frames[i] = frame.copy()
@@ -263,22 +262,22 @@ class CordLESMod(mp3.cord.Cord):
     def _calculate_mean(self):
         # Now that we have filled frames with each LES thing, we can
         # proceed to calculate the averages and all.
-        mean = numarray.sum(self._frames, axis=0) / self._numreplicates
+        mean = numpy.sum(self._frames, axis=0) / self._numreplicates
         self._mean = mean
     def _calculate_variance(self):
-        variance = numarray.subtract(self._frames, self.mean())
+        variance = numpy.subtract(self._frames, self.mean())
         variance *= variance
-        variance = numarray.sum(variance, axis=0)
-        variance = numarray.sqrt(variance)
+        variance = numpy.sum(variance, axis=0)
+        variance = numpy.sqrt(variance)
         variance /= self._numreplicates
         self._variance = variance
     def _calculate_rmsd(self):
-        rmsd = numarray.subtract(self._frames, self.mean())
+        rmsd = numpy.subtract(self._frames, self.mean())
         rmsd *= rmsd
-        rmsd = numarray.sum(rmsd, axis=2)
-        rmsd = numarray.sum(rmsd, axis=0)
+        rmsd = numpy.sum(rmsd, axis=2)
+        rmsd = numpy.sum(rmsd, axis=0)
         rmsd /= self._numreplicates
-        numarray.sqrt(rmsd, rmsd)
+        numpy.sqrt(rmsd, rmsd)
         self._rmsd = rmsd
 
     def rep_rmsd(self, repnum, atomlist):
@@ -308,8 +307,8 @@ class CordLESMod(mp3.cord.Cord):
              # axes of "rmsd" are (atoms, coordinate deviations)
         rmsd_array *= rmsd_array
         # we need to sum over it _all_ (atoms and squared deviations)
-        rmsd_array = numarray.sum(rmsd_array, axis=1)
-        rmsd_array = numarray.sum(rmsd_array, axis=0)
+        rmsd_array = numpy.sum(rmsd_array, axis=1)
+        rmsd_array = numpy.sum(rmsd_array, axis=0)
         rmsd_num = math.sqrt( rmsd_array/natoms )
 
         return rmsd_num

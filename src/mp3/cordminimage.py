@@ -1,6 +1,6 @@
 import logging ; thelog = logging.getLogger('mp3')
 thelog.debug('Loading minimage.py')
-import numarray
+import numpy
 import mp3.cord
 #import mp3.xst
 """This module does basic minimum image wrapping."""
@@ -41,7 +41,7 @@ class CordMinImage(mp3.cord.Cord):
     def setboxsize(self, boxsize):
         """Sets what boxsize you want to do minimum image wraping for.
 
-        Argument should be a tuple, list, or numarray of the form [x,y,z].
+        Argument should be a tuple, list, or numpy array of the form [x,y,z].
         """
         # Here is how we will do this.  self._boxsize_call will be a 
         # callable which will return the new boxsize.  Thus, this could 
@@ -91,14 +91,14 @@ class CordMinImage(mp3.cord.Cord):
         return self._frame
 
     def _wrap_frame(self):
-        self.boxsize = numarray.asarray(self._boxsize_call())
+        self.boxsize = numpy.asarray(self._boxsize_call())
         frame = self._frame
         wrapping = frame.copy()
-        numarray.divide(wrapping, self.boxsize, wrapping)
-        numarray.add(wrapping, .5, wrapping)
-        numarray.floor(wrapping, wrapping)
-        numarray.multiply(wrapping, self.boxsize, wrapping)
-        numarray.subtract(frame, wrapping, frame)
+        numpy.divide(wrapping, self.boxsize, wrapping)
+        numpy.add(wrapping, .5, wrapping)
+        numpy.floor(wrapping, wrapping)
+        numpy.multiply(wrapping, self.boxsize, wrapping)
+        numpy.subtract(frame, wrapping, frame)
         self._frame = frame
         return frame
             

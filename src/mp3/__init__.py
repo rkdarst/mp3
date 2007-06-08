@@ -24,7 +24,7 @@ from cordcm3d import CordCM3D
                              # CM3D cords
 from corddcd import *        # Reads DCD files
 from corddummy import *      # Example of making a wrapper for cords
-from cordlesmod import *     # Wrapper for locally-enhanced-sampling cords.
+#from cordlesmod import *     # Wrapper for locally-enhanced-sampling cords.
 from cordmerge import *      # Merges multiple coordinates into a continous set
 from cordminimage import *   # Wraps coordinates to their minimum images
 from cordpdb import *        # Reads coordinates from PDBs

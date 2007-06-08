@@ -7,7 +7,7 @@ import sys
 import logging ; thelog = logging.getLogger('mp3')
 thelog.debug('Loading minimage.py')
 
-import numarray
+import numpy
 import mp3.log
 try:
     import scipy.optimize
@@ -116,8 +116,8 @@ class CordAlign(mp3.cord.Cord):
         self.verbose = verbose
 
         self._saveaverage = saveaverage
-        if saveaverage == True:
-            self._sum_of_frames = numarray.zeros(type=numarray.Float32,
+        if saveaverage:
+            self._sum_of_frames = numpy.zeros(dtype=numpy.float32,
                                                  shape=(self.cord.natoms(), 3))
         self._sum_of_frames_count = 0
         
@@ -174,7 +174,7 @@ class CordAlign(mp3.cord.Cord):
         else:
             self.curframe = frame[self.atomlist].copy()
 
-        if self._align_to_next_frame == True:
+        if self._align_to_next_frame:
             # We wanted to align to the first frame of the DCD.  See
             # above for an explanation.
             if self.atomlist is None:
@@ -215,7 +215,7 @@ class CordAlign(mp3.cord.Cord):
         self.guess = result[0]
         self._frame = mp3.functions.cordtransform(frame, move=self.guess[0:3],
                                                   rotate=self.guess[3:6])
-        if self._saveaverage == True:
+        if self._saveaverage:
             self._sum_of_frames += self._frame
             self._sum_of_frames_count += 1
 
@@ -239,7 +239,7 @@ class CordAlign(mp3.cord.Cord):
 
         As we go through the trajectory, we save the data needed to
         compute the average of the whole frame.  This method returns
-        the average of all atoms' locations, in a simple numarray
+        the average of all atoms' locations, in a simple numpy array
         (looks just like a normal frame).  The average is taken for
         each atom, not just those being used to align.  Some averages
         may not be relavent, for example if you are aligining a
@@ -250,7 +250,7 @@ class CordAlign(mp3.cord.Cord):
         In order to use this, you must have initilized the CordAlign
         with saveaverage=True.
         """
-        if self._saveaverage == True:
+        if self._saveaverage:
             averageframe = self._sum_of_frames / self._sum_of_frames_count
             return averageframe
         else:

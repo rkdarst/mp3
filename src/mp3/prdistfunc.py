@@ -2,7 +2,7 @@
 #
 #
 
-import numarray
+import numpy
 import itertools
 from math import pi
 import mp3.log
@@ -116,8 +116,8 @@ class PDFHistogram:
         # to get it set up for adding just points later on.
         if keywords.has_key("nbins"):
             nbins = keywords["nbins"]
-            self._bins = numarray.zeros(nbins)
-            self._volbins = numarray.zeros(nbins, type=numarray.Float32)
+            self._bins = numpy.zeros(nbins)
+            self._volbins = numpy.zeros(nbins, dtype=numpy.float32)
             self._overflows = 0
 
 
@@ -197,9 +197,9 @@ class PDFHistogram:
         #    # if volume not specified, it must already be known.
         #    volume = self._volume
             
-        # convert inputs into numarrays
-        bins = numarray.asarray(bins)
-        volbins = numarray.asarray(bins, type=numarray.Float32 )
+        # convert inputs into numpy arrays
+        bins = numpy.asarray(bins)
+        volbins = numpy.asarray(bins, dtype=numpy.float32 )
         # do volume corrections
         for bin, i in zip(volbins, itertools.count()):
             r = binwidth * i
@@ -213,8 +213,8 @@ class PDFHistogram:
             self._volbins = volbins
             self._overflows = overflows
         else:
-            self._bins = numarray.add(self._bins, bins)
-            self._volbins = numarray.add(self._volbins, volbins)
+            self._bins = numpy.add(self._bins, bins)
+            self._volbins = numpy.add(self._volbins, volbins)
             self._overflows += overflows
 
     def addpoints(self, points, volume):
@@ -274,7 +274,7 @@ class PDFHistogram:
         """Distances of each bin.
 
         Returns the lower bound of each bin."""
-        return self._binwidth * numarray.arange(len(self._bins))
+        return self._binwidth * numpy.arange(len(self._bins))
 
     def bins(self):
         """ Return unnormalized bins.
@@ -285,7 +285,7 @@ class PDFHistogram:
         """Return (bin * (V/dV) ) / total_pdf_count
         """
         total_pdf_count = self.total_pdf_count()
-        return numarray.asarray(self._volbins / total_pdf_count)
+        return numpy.asarray(self._volbins / total_pdf_count)
 
     def integrated_bins(self):
         n_bins = self.normalized_bins()
@@ -348,8 +348,10 @@ def _plot(bins, bins_d):
 
 def cpdf_histframe(**keywords):
     """Thin wrapper around the C PDF histrogram function.
+
+    XXX this and the C module must be updated for numpy!
     """
-    keywords["frame"] = numarray.asarray(keywords["frame"])
+    keywords["frame"] = numpy.asarray(keywords["frame"])
     keywords["atomlist1"] = tuple(keywords["atomlist1"])
     if not hasattr(keywords, "atomlist2"):
         keywords["atomlist2"] = keywords["atomlist1"]

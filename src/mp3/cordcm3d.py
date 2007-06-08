@@ -1,4 +1,4 @@
-import numarray
+import numpy
 import mp3.cord
 import mp3.log
 
@@ -69,7 +69,7 @@ class CordCM3D(mp3.cord.Cord):
         self._natoms = int(line[0])
         self._tstep_size = float(line[2])
         self._dcdfreq = int(line[1])
-        self._frame = numarray.zeros(shape=(self._natoms,3), type=numarray.Float32)
+        self._frame = numpy.zeros(shape=(self._natoms,3), dtype=numpy.float32)
         if ensure_nframes:
             self.calcnframes()
 
@@ -131,7 +131,7 @@ class CordCM3D(mp3.cord.Cord):
             self._fo = file(self._filename, "r")
             self._fo.readline() # read past the header.
         #
-        frame = numarray.zeros(shape=(self._natoms,3), type=numarray.Float32)
+        frame = numpy.zeros(shape=(self._natoms,3), dtype=numpy.float32)
         nextline = self._fo.readline  # function to directly call
         try:
             for i in range(self._natoms):

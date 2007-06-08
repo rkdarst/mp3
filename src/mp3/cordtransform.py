@@ -1,6 +1,6 @@
 import logging ; thelog = logging.getLogger('mp3')
 thelog.debug('Loading minimage.py')
-import numarray
+import numpy
 import mp3.cord
 import mp3
 """This will preform an arbitrary translation on all of the frames.

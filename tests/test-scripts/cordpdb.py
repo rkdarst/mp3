@@ -1,7 +1,7 @@
 
 import mp3
 
-C = mp3.CordPDB("inputs/les/apombC_SPCE100ion.pdb")
+C = mp3.CordPDB("inputs/apombC_SPCE100ion.pdb")
 print C.framen()
 print C.natoms()
 

@@ -1,6 +1,6 @@
 
 
-import numarray
+import numpy
 import mp3.functions
 
 class Msder:
@@ -31,7 +31,7 @@ class Msder:
     you goal, use the 'finish_msd_window' method after you have read
     as many frames as you desire.
     
-    The 'msd' method returns a numarray with the msd information.
+    The 'msd' method returns a numpy array with the msd information.
       msdlist[i] == separation of i frames apart.
     Note that this means that msdlist[0] == 0, since being zero frames
     apart mean taking the deviation of a frame with itself.
@@ -94,9 +94,9 @@ class Msder:
             self._one_msdrun()
 
     def msd(self):
-        """Return a numarray containing the msd.
+        """Return a numpy array containing the msd.
         """
-        return numarray.divide(self._msd_sum, self._count_sum)
+        return numpy.divide(self._msd_sum, self._count_sum)
 
     def write_msdlist(self, filename="msd.dat"):
         """Write the msd list (separated by newlines) to a file.

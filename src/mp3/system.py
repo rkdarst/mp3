@@ -1,7 +1,7 @@
 import logging
 thelog = logging.getLogger('mp3')
 import labels #as mp3labels
-
+import numpy
 
 class System(labels.Labels):
 
@@ -181,27 +181,28 @@ class System(labels.Labels):
         output.write( "ATOM  " )
         output.write( "%5d " % (fakeatomn +1) )  #atomn
 
-        output.write( "%-4.4s " % self.data.field('atomname')[atomn] ) 
+        output.write( "%-4.4s " % self.data['atomname'][atomn] ) 
         # (above)
         # it seems that a numarray.recarray strips any tailing whitespace.
         # This natually will break the spacing of the output if you try to
         # write it right-justified.  So we can't do that.  So I will make it
         # left-justified until something better comes up.
+        # XXX fixed in numpy-- I should come back and reanalyze this write-out.
 
-        output.write( "%-4.4s" % self.data.field('resname')[atomn] )
+        output.write( "%-4.4s" % self.data['resname'][atomn] )
         #this is the field which should be three chars, but I illegally increase it to four
         
         output.write(" "  ) #chainid 
-        output.write( "%4d" % self.data.field('resnum')[atomn] )
+        output.write( "%4d" % self.data['resnum'][atomn] )
         output.write(" "  )#icode
         output.write("   ")
         output.write( "%8.3f" % self.cord.frame()[atomn,0] )    #use "%8.3f" for proper pdb format  #xcord
         output.write( "%8.3f" % self.cord.frame()[atomn,1] ) #ycord
         output.write( "%8.3f" % self.cord.frame()[atomn,2] ) #zcord
-        output.write( "%6.2f" % self.data.field('occupancy')[atomn] )     #occupancy
-        output.write( "%6.2f      " % self.data.field('tempfactor')[atomn] )    #tempfactor
-        output.write( "%-4.4s" % self.data.field('segname')[atomn] ) #segname
-        output.write( "%2.2s"% self.data.field('element')[atomn] )  #element
+        output.write( "%6.2f" % self.data['occupancy'][atomn] )     #occupancy
+        output.write( "%6.2f      " % self.data['tempfactor'][atomn] )    #tempfactor
+        output.write( "%-4.4s" % self.data['segname'][atomn] ) #segname
+        output.write( "%2.2s"% self.data['element'][atomn] )  #element
 
         output.write( "  \n" )   #charge
 
@@ -257,28 +258,28 @@ class System(labels.Labels):
         output.write( "ATOM  " )
         output.write( "%5d " % (fakeatomn +1) )  #atomn
 
-        if len(self.data.field('atomid')[atomn]) == 4:
-            output.write( "%4.4s " % self.data.field('atomname')[atomn] ) #used to be atomtype  #atomtype
+        if len(self.data['atomid'][atomn]) == 4:
+            output.write( "%4.4s " % self.data['atomname'][atomn] ) #used to be atomtype  #atomtype
         else:
-            output.write( " %-3.3s " % self.data.field('atomtype')[atomn] ) #used to be atomtype  #atomtype
+            output.write( " %-3.3s " % self.data['atomtype'][atomn] ) #used to be atomtype  #atomtype
 
 
 
-        output.write( "%-4.4s" % self.data.field('resname')[atomn] )   #take the slice to ensure that it is 4 characters long  #resname
+        output.write( "%-4.4s" % self.data['resname'][atomn] )   #take the slice to ensure that it is 4 characters long  #resname
         output.write(" "  ) #chainid 
-        output.write( "%4d" % self.data.field('resnum')[atomn] ) #resnum
+        output.write( "%4d" % self.data['resnum'][atomn] ) #resnum
         output.write(" "  )#icode
         output.write("   ")
         output.write( "%8.3f" % self.cord.frame()[atomn,0] )    #use "%8.3f" for proper pdb format  #xstr
         output.write( "%8.3f" % self.cord.frame()[atomn,1] ) #ystr
         output.write( "%8.3f" % self.cord.frame()[atomn,2] ) #zstr
-        output.write( "%6.2f" % self.data.field('occupancy')[atomn] )     #occupancy
-        output.write( "%6.2f      " % self.data.field('tempfactor')[atomn] )    #tempfactor
+        output.write( "%6.2f" % self.data['occupancy'][atomn] )     #occupancy
+        output.write( "%6.2f      " % self.data['tempfactor'][atomn] )    #tempfactor
 
-        if len(self.labels.data.field('segname')[atomn]) == 4:
-            output.write( "%-4.4s" % self.data.field('segname')[atomn] ) #segname
+        if len(self.data['segname'][atomn]) == 4:
+            output.write( "%-4.4s" % self.data['segname'][atomn] ) #segname
         else:
-            output.write( " %3.3s" % self.data.field('segname')[atomn] ) #segname
+            output.write( " %3.3s" % self.data['segname'][atomn] ) #segname
 
 
         output.write( "  " )  #element
@@ -318,13 +319,12 @@ class System(labels.Labels):
 #   11  HC    -0.023194    1.941312    0.866941     6     9
       
         for i in range(self.natoms()):
-            indexer = data[i].field
             fo.write("%6d  %-4.4s%11.6f %11.6f %11.6f %5.5d%s"%(i+1,
-                                                                indexer("atomname"),
+                                                                data["atomname"][i],
                                                                 cords[i,0],
                                                                 cords[i,1],
                                                                 cords[i,02],
-                                                                indexer("atomtypenum"),
+                                                                data["atomtypenum"][i],
                                                                 self.labels._tinkerbondlist[i]  ))
 
     def center_of_mass(self, atomlist=None, weights=None):
@@ -347,13 +347,13 @@ class System(labels.Labels):
         # get weighting if not passed, defaulting to masses from the
         # labels.
         if weights is None:
-            weights = self.data.field("mass")[atomlist]
+            weights = self.data["mass"][atomlist]
         # get positions for our atoms
         #   I tested this, it won't alter the original frame.
         frame = self.cord.frame()[atomlist]
         frame.transpose()
         # COM = sum(r*m) / sum(m)
-        COM = numarray.sum(frame*weights, axis=1) / sum(weights)
+        COM = numpy.sum(frame*weights, axis=1) / sum(weights)
 
         # This code has been tested against VMD.  This is what we got.
         # It isn't exactly on, but close enough to blame it on

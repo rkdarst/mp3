@@ -1,6 +1,6 @@
 import logging ; thelog = logging.getLogger('mp3')
 thelog.debug('Loading minimage.py')
-import numarray
+import numpy
 import mp3.cord
 """This sample of how to modify coordinates.
 

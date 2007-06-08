@@ -2,7 +2,7 @@
 
 import hotshot
 import shelve
-import numarray
+import numpy
 import mp3
 import Gnuplot
 
@@ -109,7 +109,7 @@ class Msder:
         do_all_msd(n)
 
     def msd(self):
-        return numarray.divide(self._msd_sum, self._count_sum)
+        return numpy.divide(self._msd_sum, self._count_sum)
 
     def write_msdlist(self, filename="msd.dat"):
         fo = file(filename,"w")

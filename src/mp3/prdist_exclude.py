@@ -1,6 +1,6 @@
 # Richard Darst, 2005
 
-import numarray
+import numpy
 
 import mp3
 
@@ -100,21 +100,21 @@ class PDFExcluder:
             overflows = 0                # how many points are too large to count.
             max_distance = nbins*binwidth # distance => this counts as an overflow
             
-            # we use numarray to loop over atomlist 2.  This saves us a lot of time.
+            # we use numpy array to loop over atomlist 2.  This saves us a lot of time.
             for i, atom1 in enumerate(self._atomlist1):
                 atomlist2 = excludelist[i]
                 deltas = frame[atomlist2] - frame[atom1]   # displacements
-                numarray.divide(deltas, boxsize, deltas)   # new coordinates:
+                numpy.divide(deltas, boxsize, deltas)   # new coordinates:
                                                            # [0,boxsize)  ->  [0,1)
                 # These lines map all points to the interval [-.5, .5)
-                shift = numarray.add(deltas, .5)           
-                numarray.floor(shift, shift)
-                numarray.subtract(deltas, shift , deltas)
-                numarray.multiply(deltas, boxsize, deltas)  # --> [-size/2, size/2 )
+                shift = numpy.add(deltas, .5)           
+                numpy.floor(shift, shift)
+                numpy.subtract(deltas, shift , deltas)
+                numpy.multiply(deltas, boxsize, deltas)  # --> [-size/2, size/2 )
                 deltas *= deltas
-                deltas = numarray.sum(deltas, axis=1)
+                deltas = numpy.sum(deltas, axis=1)
                 #print deltas
-                distances = numarray.sqrt(deltas)
+                distances = numpy.sqrt(deltas)
                 
                 # record the data
                 for distance in distances:

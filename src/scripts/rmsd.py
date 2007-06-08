@@ -1,5 +1,5 @@
 
-import mp3, sys, numarray
+import mp3, sys, numpy
 from math import sqrt
 
 
@@ -27,11 +27,11 @@ for i in xrange(0,mols.cord.natoms):   # loop over all atoms...
 natoms_to_analyze = len(atoms_to_analyze)   # hom many atoms are we analyzing here ?
 
 c_win = 5   # how long we want the MSD window to be
-data = numarray.zeros(type=numarray.Float32, shape=(natoms_to_analyze, c_win, 3))
+data = numpy.zeros(dtype=numpy.float32, shape=(natoms_to_analyze, c_win, 3))
     #this array will hold the last c_win frames
     # data[n,t,3] , where n is the atom, and t how new this data is. current frame, t=0
     
-msd = numarray.zeros(type=numarray.Float32, shape=(natoms_to_analyze, c_win))
+msd = numpy.zeros(dtype=numpy.float32, shape=(natoms_to_analyze, c_win))
     #this array holds the sum of the squares of the displacements
     
 ntrials = 0  # we need to keep track of how many samples we get over time
@@ -45,12 +45,12 @@ for i in xrange(c_win-1, -1, -1):   # go backwards
 
 for ii in xrange(c_win,mols.cord.nframes):         # until we are through with this dcd.
     for i in xrange(0,c_win):           # do a test with all of the date we have stored
-        msd[:,i] += ( numarray.sum ((data[:,0,:]-data[:,i,:]) * (data[:,0,:]-data[:,i,:]), axis=1))
+        msd[:,i] += ( numpy.sum ((data[:,0,:]-data[:,i,:]) * (data[:,0,:]-data[:,i,:]), axis=1))
     ntrials += 1
     data[1:] = data[:-1]
     data[:,-1,:] = mols.cord.nextframe()[atoms_to_analyze]
 
 
-numarray.divide( msd, ntrials, msd)
+numpy.divide( msd, ntrials, msd)
 print msd[0:10]
 

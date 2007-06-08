@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import optparse, fileinput, numarray.strings, string, os, sys, re
+import optparse, fileinput, string, os, sys, re
 
 #outputhandler = "xmgrace"
 outputhandler = "stdout"

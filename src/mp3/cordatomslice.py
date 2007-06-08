@@ -4,7 +4,7 @@
 #atoms from a DCD object, and only pass those atoms on.
 #
 
-import numarray
+import numpy
 import mp3.cord
 
 from mp3.log import mp3log
@@ -46,14 +46,14 @@ class CordAtomSlice(mp3.cord.Cord):
 
             frame = nextframe[ATOMLIST]
 
-    So ATOMLIST is anything that can "slice" a numarray.  Most typically,
+    So ATOMLIST is anything that can "slice" a numpy array.  Most typically,
     this would be a simple atomlist:
 
     atomlist = range(10)     # the first 10 atoms
 
     atomlist = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
                              # the first 10 atoms IN REVERSE ORDER.
-                             # This is a feature of numarray slicing.
+                             # This is a feature of numpy array slicing.
                              # It will return the atoms in the order
                              # you specify.
 

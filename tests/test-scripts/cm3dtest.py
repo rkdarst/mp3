@@ -24,13 +24,13 @@ print S.labels.data[:10]
 # Set the protein atom names.  We read them from another psf file we
 # have, and we know that there are 2464 protein atoms.
 Spsf = mp3.System(psf="inputs/cm3dfiles/apomb_works.psf")
-print Spsf.data.field("atomname")
-S.data.field('atomname')[0:2464] = Spsf.data.field('atomname')
+print Spsf.data["atomname"]
+S.data['atomname'][0:2464] = Spsf.data['atomname']
 # Set the water atomnames and resnames.  We assume that all remaining
 # atoms are water.
-nWat = len(S.data.field('atomname')[2464:])/3
-S.data.field('atomname')[2464:] = ['OH','1H','2H'] * nWat
-S.data.field('resname')[2464:] = ['HOH'] * nWat * 3
+nWat = len(S.data['atomname'][2464:])/3
+S.data['atomname'][2464:] = ['OH','1H','2H'] * nWat
+S.data['resname'][2464:] = ['HOH'] * nWat * 3
 
 #
 # Test trajectory files.

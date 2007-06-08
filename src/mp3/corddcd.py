@@ -1,7 +1,7 @@
 import sys, string, struct
 import mp3.log as log
 log.debug('Loading corddcd.py')
-import numarray
+import numpy
 import mp3.cord
 """
 This module contains definitions that pertain only to
@@ -40,7 +40,7 @@ class CordDCD(mp3.cord.Cord):
         self._fo.close()
         self._fo = None
 
-        self._frame = numarray.zeros(shape=(self._natoms,3), type=numarray.Float32)
+        self._frame = numpy.zeros(shape=(self._natoms,3), dtype=numpy.float32)
 
     def _openfo(self):
         """Re-open the file object which is curretly closed.
@@ -254,15 +254,15 @@ class CordDCD(mp3.cord.Cord):
         # We don't want to update in-place, that will cause unexpected
         # problems which people aren't expecting, and they store old
         # frames to see that they have been updated!
-        self._frame = numarray.zeros(shape=(self._natoms,3), type=numarray.Float32)
+        self._frame = numpy.zeros(shape=(self._natoms,3), dtype=numpy.float32)
 
         #log.debug('---In dcd.py, get_next_frame(), self.framen=%s'%self.framen())
         self._fo.read(4)             #to save time, we won't error check this ! (or should we ?
-        self._frame[:,0]= numarray.fromfile(self._fo, numarray.Float32, shape=(self._natoms,))
+        self._frame[:,0] = numpy.fromfile(self._fo, dtype=numpy.float32, count=self._natoms)
         self._fo.read(8)
-        self._frame[:,1] = numarray.fromfile(self._fo, numarray.Float32, shape=(self._natoms,))
+        self._frame[:,1] = numpy.fromfile(self._fo, dtype=numpy.float32, count=self._natoms)
         self._fo.read(8)
-        self._frame[:,2] = numarray.fromfile(self._fo, numarray.Float32, shape=(self._natoms,))
+        self._frame[:,2] = numpy.fromfile(self._fo, dtype=numpy.float32, count=self._natoms)
         self._fo.read(4)
 
         # I still don't know what this block would be.
