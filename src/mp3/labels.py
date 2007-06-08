@@ -1,5 +1,4 @@
 import glob
-import sets
 import numpy
 import logging
 import os.path
@@ -213,7 +212,7 @@ class Labels:
         # But it's only in python2.4.
         atomset = set(lists_to_intersect[0])
         for otherlist in lists_to_intersect[1:]:
-            atomset &= sets.Set(otherlist)
+            atomset &= set(otherlist)
         return atomset
         #return atomlist
 
