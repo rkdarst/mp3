@@ -1,0 +1,138 @@
+#!/usr/bin/python
+import optparse, fileinput, string, os, sys, re
+
+#outputhandler = "xmgrace"
+outputhandler = "stdout"
+
+###
+###  Set-up
+###
+
+usage = """%s 'field-name[ ...]' [input-file [...]]
+
+Read named TINKER output log files, or stdin.  Match 'field-name's (as
+regex'es) against a list of field names.  Print out those fields to
+stdout, or xmgrace."""%(sys.argv[0])
+
+parser = optparse.OptionParser(usage)
+parser.add_option("-x", "--xmgrace", action='store_true', dest='xmgrace',
+                  help="Output to xmgrace")
+parser.add_option("-o", "--stdout", action="store_true", dest='stdout',
+                  help="Output to stdout")
+parser.add_option("-n", "--noout", action="store_true", dest='noout',
+                  help="No output")
+parser.add_option("--fields", action="store_true", dest="print_fields",
+                  help="show what the fields are, and how matching works")
+parser.add_option("-v", "--version", action="store_true", dest="version",
+                  help="known bugs and how to call the exterminator")
+options, args = parser.parse_args()
+
+if len(args) < 2:
+    print "Not enough arguments given"
+    sys.exit
+    
+tinker_fields = ["mdstep",
+             "e_total",
+             "e_potential",
+             "e_kinetic",
+             "temperature",
+             "pressure",
+               ]
+
+if options.print_fields != None:
+    print "We know of these fields:"
+    print ""
+    print tinker_fields
+    print ""
+    print "We match your field selections against each of these, starting"
+    print "at the beginning of the list, until one matches with a"
+    print "case-insensitive seach. Regular expressions should be supported."
+    print "There is an implicit ^ at the beginning of each regex. The fields"
+    print "outputed are the ones you enter, in the order you enter them,"
+    print "regardless of duplication or the actual input order."
+    sys.exit()
+if options.version != None:
+    print "namdawk.py  0.0"
+    print ""
+    print "Richard Darst  --  ten.bigz@dkr"
+    print "Many bugs, but I'll wait for you to tell them to me"
+    print ""
+    print "report new bugs to the email address which is written backwards above"
+    sys.exit()
+###
+###  Find out what we are trying to print
+###
+    
+#inputs = fileinput.input(args[1:])
+
+given_fields = args[0].split()
+
+def findmatch(list, name):
+#    print name
+    rex = re.compile(name, re.I)
+    for val in list: #i in range(0,len(list)):
+        if rex.search(val) != None:
+            return val
+    return None
+fields = []
+#print given_fields
+for fieldname in given_fields:
+    tmp = findmatch(tinker_fields, fieldname)
+    if tmp != None:
+        fields.append("T."+tmp)
+codeLine = '(' + ",".join(fields) + ',)'
+#print codeLine
+codeLine = compile(codeLine, "<input>", "eval")
+
+###
+### Set up where we will write it to:
+###
+#import psyco
+#psyco.full()
+
+#decide how to deal with the data.
+if options.noout != None:
+    outputhandler = "noout"
+    def nullfunc(line):
+        pass
+    output = nullfunc
+elif options.xmgrace != None:
+    outputhandler = "xmgrace"
+    class grace:
+        def __init__(self):
+            self.grace = os.popen("xmgrace -nxy -", "w")
+        def __call__(self,line):
+            #        print line
+            self.grace.write(line+'\n')
+    output = grace()
+#else options.stdout != None:
+else:
+    outputhandler = "stdout"
+    def stdout(line):
+        print line
+    output = stdout
+
+import mp3.tinkerutil
+fname = args[1]
+if fname[-4:] == ".bz2":
+    import bz2
+    f = bz2.BZ2File(fname)
+elif fname[-3:] == ".gz":
+    import gzip
+    f = GzipFile(fname)
+else:
+    f = file(fname)
+
+def doit():
+    T = mp3.tinkerutil.TinkerLogParser(f, skip=100)
+    for T in T.iter():
+    
+        line = eval(codeLine)
+        line = [str(x) for x in line]
+        line = " ".join(line)
+        output(line)
+doit()
+    
+
+    
+    
