@@ -3,7 +3,7 @@
 #
 #
 #
-import scipy.optimize,sys
+import sys
 import logging ; thelog = logging.getLogger('mp3')
 thelog.debug('Loading minimage.py')
 
@@ -70,6 +70,7 @@ class CordAlign(mp3.cord.Cord):
                  aligntoframe=None,
                  saveaverage=False,
                  minimizer="scipy:powell",
+                 callback=None,
                  verbose=False):
         """Create the alignment object.
 
@@ -95,6 +96,10 @@ class CordAlign(mp3.cord.Cord):
             Specifies the minimization routine to be used in aligning the
             structure.  The default is the direction set (powell's) method.
             Another option is the downhill simplex (Nelder-Mead) method.
+        callback=
+            A function which will be called on each simplex minimization
+            step.  It is called as `callback(xk, self)` with `xk` the
+            current guess and `self` being the CordAlign object.
         verbose=
             The default state is quiet.  With verbose specified as True, information
             from minimization routine will be output.  This includes the function value,
@@ -107,6 +112,7 @@ class CordAlign(mp3.cord.Cord):
         self.atomlist = atomlist
         self._align_to_next_frame = False
         self.minimizer = minimizer
+        self.callback = callback
         self.verbose = verbose
 
         self._saveaverage = saveaverage
@@ -162,6 +168,7 @@ class CordAlign(mp3.cord.Cord):
         """
         # extract the next frame, slice it by atoms if necessary.
         frame = self.cord.nextframe()
+        self.ca_origframe = frame  # not .copy()'ing it, when I wrote it we didn't need to.
         if self.atomlist is None:
             self.curframe = frame.copy()
         else:
@@ -186,12 +193,20 @@ class CordAlign(mp3.cord.Cord):
             dispval = 1
         else:
             dispval = 0
+        if self.callback:
+            callback = lambda xk:  self.callback(xk, self)
+            # your callback can increment this to figure out what step it is on
+            self.iterstep = 0 
+        else:
+            callback = None
         if self.minimizer == "scipy:powell":
-            result = scipy.optimize.fmin_powell(rmsd,self.guess,disp=dispval,full_output=1)
+            result = scipy.optimize.fmin_powell(rmsd,self.guess,disp=dispval,full_output=1,
+                                                callback=callback)
             self.iterations = result[3]
             self.funcalls = result[4]
         elif self.minimizer == "scipy:simplex":
-            result = scipy.optimize.fmin(rmsd,self.guess,disp=dispval,full_output=1)
+            result = scipy.optimize.fmin(rmsd,self.guess,disp=dispval,full_output=1,
+                                         callback=callback)
             self.iterations = result[2]
             self.funcalls = result[3]
         else:
