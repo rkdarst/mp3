@@ -20,7 +20,7 @@ class TinkerLogParser:
 # Simulation Time              0.1000 Picosecond
 # Total Energy             -4049.8207 Kcal/mole   (+/-   4.7434)
           
-    def __init__(self, log):
+    def __init__(self, log, skip=10):
         if type(log) == file or ( hasattr(log, "readline") ):
             pass
         else:
@@ -35,15 +35,26 @@ class TinkerLogParser:
         log.readline()
         # the next line starts our data.
         self._log = log
+        self._skip = skip
         self.mdstep = 0
+
+    def iter(self):
+        while self.next():
+            yield self
 
     def next(self):
         """Bring us to the next dataset in the file.
         """
         log = self._log
-
+        blankLineCount = 0
         while True:  
             line = log.readline()
+            #print line
+            if line == "":
+                #print blankLineCount
+                blankLineCount += 1
+                if blankLineCount > 50:
+                    return None
             #print self.mdstep, line,
             line = line.split()
             try:
@@ -62,7 +73,7 @@ class TinkerLogParser:
         self.pressure = float(line[5])
 
 
-        if mdstep % 100 == 0:
+        if mdstep % self._skip == 0:
             log.readline()
             line = log.readline()
             if line[0:28] != " Average Values for the last":
@@ -98,6 +109,7 @@ class TinkerLogParser:
             #print averages
             log.readline()
             self._averages = averages
+        return True
 
     # def mdstep(self): return self._mdstep
     # ... etc
