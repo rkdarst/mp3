@@ -28,8 +28,8 @@ thelog = logging.getLogger('mp3')
 class Labels:
     """This class handles extra atom information, such as names and residue numbers.
 
-    It reads information from psf files. Note that it isn't very smart at
-    parsing these psf's yet.
+    Labels are used via the System class.  You would call any methods
+    you see here directly on the System object.
 
     Class contians:
         getfrompsf() -- Gets label information from a psf
@@ -43,10 +43,10 @@ class Labels:
             data[atomnum]['fieldname']
                 field names (atomnum stored in field index, all other
                              fields correspond to the values found in
-                             the PDB/PSF/etc. ):
+                             the PDB/PSF/etc. NOTE: zero-based indexing):
                     atomtype -- string4
                     atomtypenum -- int   (from tinker)
-                    atomname -- string4
+                    atomname -- string4   ***
                     charge -- float
                     element -- string2
                     mass -- float
@@ -56,10 +56,13 @@ class Labels:
                     segname -- string4
                     tempfactor -- float
                     unused  -- int
+            *** Atomnames will have *leading whitespace*.
+                Four-character atomnumbers have no leading spaces,
+                shorter ones usually have one leading space
 
-    examples:
+    examples (S is a mp3.System object):
         list with masses of all atoms:
-        L.data["mass"]
+        S.data["mass"]
         mass of atomnum 10 (11th atom since indexing is from zero):
         L.data[10]["mass"]
 

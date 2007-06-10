@@ -4,6 +4,19 @@ import labels #as mp3labels
 import numpy
 
 class System(labels.Labels):
+    """Object which combines coordinates and atom labels.
+
+    This object stores coordinates at self.cord, which are regular
+    coordinate objects.  Label data is stored at self.data.
+
+    Label data is accessed by self.data['labelname'][atomnum].  It is
+    generally more efficient to do data['labelname'][atomnum] than
+    data[atomnum][labelname].  Label data is implemented by the class
+    mp3.labels.Labels.  The System class is a subclass of Labels, so
+    all Labels methods are called directly on the system.  For
+    example, you would do System.getfrompdb().  See `pydoc
+    mp3.labels.Labels` for more information on using labels.
+    """
 
     def __init__(self, psf=None, cord=None, pdb=None):
         """
@@ -40,6 +53,10 @@ class System(labels.Labels):
     #    raise AttributeError
     def natoms(self):
         """Number of atoms.
+
+        First attempts to get number of atoms from labels which have
+        been read, if that is not avaliable then it will attempt to
+        get it from the number of atoms in a coordinate file.
         """
         if hasattr(self, "_natoms"):
             return self._natoms
@@ -67,13 +84,15 @@ class System(labels.Labels):
     def writepdbseries(self,prefix):
         """Writes out an entire pdb sequence.
 
-        Pass this method the prefix of your PDBs.  It will write out all
-        frames in the coordinate set in self.cord, using field
-        information from self.labels .
+        Pass this method the prefix of your PDBs.  It will write out
+        all frames in the coordinate set in self.cord, using field
+        information from self.data .
 
         Prefix should be a string. Output is "prefixXXXXX.pdb", where
-        XXXXX is the number of the frame, starting from zero. You can use
-        .atoms_to_use() to print out only a subset of the atoms.
+        XXXXX is the number of the frame, starting from zero.
+
+        You can use the `atomlist` option to write out only a subset
+        of the atoms.
 
         This method will call cord.nextframe() before it starts printing,
         so do not call self.cord.nextframe() yourself-- this will break
@@ -84,10 +103,11 @@ class System(labels.Labels):
     def writepdb(self, name):
         """Writes a single pdb, from the current frame.
 
+        You can use the `atomlist` option to write out only a subset
+        of the atoms.
+
         Writes the current frame (self.cord.frame) to the given
-        filename (not just a prefix).  If a atomlist has been defined
-        using .set_atoms_to_print(), it will only print out lines
-        corresponding to those atoms        
+        filename (not just a prefix).  nextframe() is not called.       
         """
         self._pdbframe(name)
 
