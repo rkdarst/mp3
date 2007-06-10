@@ -81,7 +81,7 @@ class System(labels.Labels):
 #  Writing PDBs
 #
 
-    def writepdbseries(self,prefix):
+    def writepdbseries(self, prefix, atomlist=None):
         """Writes out an entire pdb sequence.
 
         Pass this method the prefix of your PDBs.  It will write out
@@ -98,9 +98,14 @@ class System(labels.Labels):
         so do not call self.cord.nextframe() yourself-- this will break
         things (it will try to read one too many frames).
         """
-        self._writepdbseq(prefix)
+        thelog.debug("system.py, printpdbseq()")
+        for framen in range(0,self.cord.nframes()):
+            filename = prefix + ("%.4d" % framen) + ".pdb"
 
-    def writepdb(self, name):
+            self.cord.nextframe()
+            self._pdbframe(filename, atomlist=atomlist)
+
+    def writepdb(self, name, atomlist=None):
         """Writes a single pdb, from the current frame.
 
         You can use the `atomlist` option to write out only a subset
@@ -109,50 +114,12 @@ class System(labels.Labels):
         Writes the current frame (self.cord.frame) to the given
         filename (not just a prefix).  nextframe() is not called.       
         """
-        self._pdbframe(name)
+        self._pdbframe(name, atomlist=atomlist)
 
 # 
 # Stuff for printing PBDs
-# 
-    def atoms_to_use(self, atomlist=None):
-        """Set up for printing only a subset of all atoms in the PDBs
-
-        If this method has been called and given an atomlist, the list
-        will be stored and any PDBs printed will only include those atoms.
-
-        If this method is called without an argument or with None as
-        the argument, it will reset the state so that all atoms will
-        be included.        
-        """
-        if atomlist != None:
-            self.atomlist = atomlist
-        else:
-            if hasattr(self, "atomlist"):
-                del self.atomlist
-
-    def _writepdbseq(self, prefix):
-        """Writes out an entire pdb sequence. (non-public)
-
-        Use .writepdbseries() instead.  That's a wrapper that
-        won't change, this function might
-    
-        prints all pdb frames in a given system, with the given prefix
-        (prefix is a string).
-
-        This method will call self.cord.nextframe() before it writes out it's
-        first frame!
-
-        Not a public method. 
-        """
-        thelog.debug("system.py, printpdbseq()")
-        for framen in range(0,self.cord.nframes()):
-            filename = prefix + ("%.4d" % framen) + ".pdb"
-
-            self.cord.nextframe()
-            self._pdbframe(filename)
-    
-    
-    def _pdbframe(self, name):
+#     
+    def _pdbframe(self, name, atomlist=None):
         """Writes the current frame to a PDB file.
 
         Use <system>.writepdb() instead.
@@ -198,55 +165,63 @@ class System(labels.Labels):
 
         output = self.output  #=self.output
 
-        output.write( "ATOM  " )
-        output.write( "%5d " % (fakeatomn +1) )  #atomn
+        ##  output.write( "ATOM  " )
+        ##  output.write( "%5d " % (fakeatomn +1) )  #atomn
+        ##  output.write( "%-4.4s " % self.data['atomname'][atomn] ) 
+        ##  # (above)
+        ##  # it seems that a numarray.recarray strips any tailing whitespace.
+        ##  # This natually will break the spacing of the output if you try to
+        ##  # write it right-justified.  So we can't do that.  So I will make it
+        ##  # left-justified until something better comes up.
+        ##  # XXX fixed in numpy-- I should come back and reanalyze this write-out.
+        ##  
+        ##  output.write( "%-4.4s" % self.data['resname'][atomn] )
+        ##  #this is the field which should be three chars, but I illegally increase it to four
+        ##  output.write(" "  ) #chainid 
+        ##  output.write( "%4d" % self.data['resnum'][atomn] )
+        ##  output.write(" "  )#icode
+        ##  output.write("   ")
+        ##  output.write( "%8.3f" % self.cord.frame()[atomn,0] )    #use "%8.3f" for proper pdb format  #xcord
+        ##  output.write( "%8.3f" % self.cord.frame()[atomn,1] ) #ycord
+        ##  output.write( "%8.3f" % self.cord.frame()[atomn,2] ) #zcord
+        ##  output.write( "%6.2f" % self.data['occupancy'][atomn] )     #occupancy
+        ##  output.write( "%6.2f      " % self.data['tempfactor'][atomn] )    #tempfactor
+        ##  output.write( "%-4.4s" % self.data['segname'][atomn] ) #segname
+        ##  output.write( "%2.2s"% self.data['element'][atomn] )  #element
+        ##  
+        ##  output.write( "  \n" )   #charge
 
-        output.write( "%-4.4s " % self.data['atomname'][atomn] ) 
-        # (above)
-        # it seems that a numarray.recarray strips any tailing whitespace.
-        # This natually will break the spacing of the output if you try to
-        # write it right-justified.  So we can't do that.  So I will make it
-        # left-justified until something better comes up.
-        # XXX fixed in numpy-- I should come back and reanalyze this write-out.
-
-        output.write( "%-4.4s" % self.data['resname'][atomn] )
-        #this is the field which should be three chars, but I illegally increase it to four
-        
-        output.write(" "  ) #chainid 
-        output.write( "%4d" % self.data['resnum'][atomn] )
-        output.write(" "  )#icode
-        output.write("   ")
-        output.write( "%8.3f" % self.cord.frame()[atomn,0] )    #use "%8.3f" for proper pdb format  #xcord
-        output.write( "%8.3f" % self.cord.frame()[atomn,1] ) #ycord
-        output.write( "%8.3f" % self.cord.frame()[atomn,2] ) #zcord
-        output.write( "%6.2f" % self.data['occupancy'][atomn] )     #occupancy
-        output.write( "%6.2f      " % self.data['tempfactor'][atomn] )    #tempfactor
-        output.write( "%-4.4s" % self.data['segname'][atomn] ) #segname
-        output.write( "%2.2s"% self.data['element'][atomn] )  #element
-
-        output.write( "  \n" )   #charge
-
-#output.write( ( "ATOM  %s %s %s %s%s%s   %s%s%s%s%s      %s%s%s\n" % (atomserial, atomtype,resname,chainid,resnum,icode,xstr,ystr,zstr,occupancy,tempfactor,segname,element,charge))
-
-
-#        atomserial = "%5d" % (atomn +1)
-#        atomtype = "%4.4s" % self.labels.data.field('atomid')[atomn] #used to be atomtype
-#        resname = "%3.3s" % self.labels.data.field('resname')[atomn]    #take the slice to ensure that it is 4 characters long
-#        chainid = " "
-#        resnum = "%4d" % self.labels.data.field('resnum')[atomn] 
-#        icode = " "
-#        xstr = "%8.4f" % self.cord.frame[atomn,0]    #use "%8.3f" for proper pdb format
-#        ystr = "%8.4f" % self.cord.frame[atomn,1]
-#        zstr = "%8.4f" % self.cord.frame[atomn,2]
-#        occupancy = "%6.2f" % 0
-#        tempfactor = "%6.2f" % 0
-#        segname = "%4.4s" % self.labels.data.field('segname')[atomn]
-#        element = "  "
-#        charge = "  "
-#        output = ( "ATOM  %s %s %s %s%s%s   %s%s%s%s%s      %s%s%s\n" % (atomserial, atomtype,resname,chainid,resnum,icode,xstr,ystr,zstr,occupancy,tempfactor,segname,element,charge))
-#
-        #return output 
-        #self.output.write(output)
+        data = self.data
+        atomname = "%-4.4s " % data['atomname'][atomn]
+        #atomname = data['atomid'][atomn]
+        #if len(atomname) == 4:
+        #    atomname = "%4.4s " % atomname
+        #else:
+        #    atomname = " %-3.3s " % atomname
+        segname = "%-4.4s" % self.data['segname'][atomn]
+        #segname = data['segname'][atomn]
+        #if len(segname) == 4:
+        #    segname = "%-4.4s" % segname
+        #else:
+        #    segname = " %3.3s" % self.data['segname'][atomn]
+        line = ["ATOM  ",
+                "%5d "    % (fakeatomn +1),              #atomn
+                atomname,                                #atomname  
+                "%-4.4s"  % data['resname'][atomn],      #resname
+                " ",                                     #chainid
+                "%4d"     % data['resnum'][atomn],       #resnum
+                " ",                                     #icode
+                "   ",
+                "%8.3f"   % self.cord.frame()[atomn,0],  #xstr  #use "%8.3f" for proper pdb format
+                "%8.3f"   % self.cord.frame()[atomn,1],  #ystr
+                "%8.3f"   % self.cord.frame()[atomn,2],  #zstr
+                "%6.2f"   % data['occupancy'][atomn],    #occupancy
+                "%6.2f      " % data['tempfactor'][atomn], #tempfactor
+                segname,                                 # segname
+                "%2.2s"   % data['element'][atomn],      #element
+                "  \n",    #charge
+                ]
+        output.write("".join(line))
 
     def _pdbline_broke1(self, atomn, fakeatomn):
         """Just like pdbline.  non-public.
@@ -275,58 +250,35 @@ class System(labels.Labels):
 
         output = self.output  #=self.output
 
-        output.write( "ATOM  " )
-        output.write( "%5d " % (fakeatomn +1) )  #atomn
-
-        if len(self.data['atomid'][atomn]) == 4:
-            output.write( "%4.4s " % self.data['atomname'][atomn] ) #used to be atomtype  #atomtype
+        data = self.data
+        atomname = data['atomid'][atomn]
+        if len(atomname) == 4:
+            atomname = "%4.4s " % atomname
         else:
-            output.write( " %-3.3s " % self.data['atomtype'][atomn] ) #used to be atomtype  #atomtype
-
-
-
-        output.write( "%-4.4s" % self.data['resname'][atomn] )   #take the slice to ensure that it is 4 characters long  #resname
-        output.write(" "  ) #chainid 
-        output.write( "%4d" % self.data['resnum'][atomn] ) #resnum
-        output.write(" "  )#icode
-        output.write("   ")
-        output.write( "%8.3f" % self.cord.frame()[atomn,0] )    #use "%8.3f" for proper pdb format  #xstr
-        output.write( "%8.3f" % self.cord.frame()[atomn,1] ) #ystr
-        output.write( "%8.3f" % self.cord.frame()[atomn,2] ) #zstr
-        output.write( "%6.2f" % self.data['occupancy'][atomn] )     #occupancy
-        output.write( "%6.2f      " % self.data['tempfactor'][atomn] )    #tempfactor
-
-        if len(self.data['segname'][atomn]) == 4:
-            output.write( "%-4.4s" % self.data['segname'][atomn] ) #segname
+            atomname = " %-3.3s " % atomname
+        segname = data['segname'][atomn]
+        if len(segname) == 4:
+            segname = "%-4.4s" % segname
         else:
-            output.write( " %3.3s" % self.data['segname'][atomn] ) #segname
-
-
-        output.write( "  " )  #element
-        output.write( "  \n" )   #charge
-
-#output.write( ( "ATOM  %s %s %s %s%s%s   %s%s%s%s%s      %s%s%s\n" % (atomserial, atomtype,resname,chainid,resnum,icode,xstr,ystr,zstr,occupancy,tempfactor,segname,element,charge))
-
-
-#        atomserial = "%5d" % (atomn +1)
-#        atomtype = "%4.4s" % self.labels.data.field('atomid')[atomn] #used to be atomtype
-#        resname = "%3.3s" % self.labels.data.field('resname')[atomn]    #take the slice to ensure that it is 4 characters long
-#        chainid = " "
-#        resnum = "%4d" % self.labels.data.field('resnum')[atomn] 
-#        icode = " "
-#        xstr = "%8.4f" % self.cord.frame[atomn,0]    #use "%8.3f" for proper pdb format
-#        ystr = "%8.4f" % self.cord.frame[atomn,1]
-#        zstr = "%8.4f" % self.cord.frame[atomn,2]
-#        occupancy = "%6.2f" % 0
-#        tempfactor = "%6.2f" % 0
-#        segname = "%4.4s" % self.labels.data.field('segname')[atomn]
-#        element = "  "
-#        charge = "  "
-#        output = ( "ATOM  %s %s %s %s%s%s   %s%s%s%s%s      %s%s%s\n" % (atomserial, atomtype,resname,chainid,resnum,icode,xstr,ystr,zstr,occupancy,tempfactor,segname,element,charge))
-#
-        #return output 
-        #self.output.write(output)
-
+            segname = " %3.3s" % self.data['segname'][atomn]
+        line = ["ATOM  ",
+                "%5d "    % (fakeatomn +1),              #atomn
+                atomname,                                #atomname  
+                "%-4.4s"  % data['resname'][atomn],      #resname
+                " ",                                     #chainid
+                "%4d"     % data['resnum'][atomn],       #resnum
+                " ",                                     #icode
+                "   ",
+                "%8.3f"   % self.cord.frame()[atomn,0],  #xstr  #use "%8.3f" for proper pdb format
+                "%8.3f"   % self.cord.frame()[atomn,1],  #ystr
+                "%8.3f"   % self.cord.frame()[atomn,2],  #zstr
+                "%6.2f"   % data['occupancy'][atomn],    #occupancy
+                "%6.2f      " % data['tempfactor'][atomn], #tempfactor
+                segname,                                 # segname
+                "%2.2s"   % data['element'][atomn],      #element
+                "  \n",    #charge
+                ]
+        output.write("".join(line))
 
     def writetinkerxyz(self, name):
 
