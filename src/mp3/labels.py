@@ -299,7 +299,7 @@ class Labels:
             data['segname'][atomn] = line[9:13].strip()
             data['resnum'][atomn] = int(line[14:18])
             data['resname'][atomn] = line[19:23].strip()
-            data['atomname'][atomn] = line[24:28] #not stripped!! ... spacing must be preserved    #used to be "atomid"
+            data['atomname'][atomn] = line[24:28].rstrip() #not stripped!! ... spacing must be preserved    #used to be "atomid"
             data['atomtype'][atomn] = line[29:33].strip()
             data['charge'][atomn] = float(line[34:44])
             data['mass'][atomn] = float(line[44:58])  #not sure about this spacing
@@ -355,7 +355,7 @@ class Labels:
             #self.data.field('segname')[atomn] = line[72:76].strip()
             #self.data.field('element')[atomn] = line[76:78]  #used to be "junk"
             data = self.data
-            data['atomname'][atomn] = line[12:16]
+            data['atomname'][atomn] = line[12:16].rstrip()
             data['resname'][atomn] = line[17:21].strip()  # illegally expand this field
                                                    # by one
             data['resnum'][atomn] = int(line[22:26])
