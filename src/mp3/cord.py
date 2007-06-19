@@ -502,7 +502,7 @@ class Cord:
         #                    |nframes*tstep_size 
         header_format = string.replace(header_format, '-', '')
         self.ensure_nframes()
-        outdata = struct.pack(header_format, 84, 'C','O','R','D', self.nframes(), self.firsttstep(), self.dcdfreq(), ( self.dcdfreq()*self.nframes() ) , self.tstep_size(), self.block_a(), self.block_b(), self.charm_v(), 84)
+        outdata = struct.pack(header_format, 84, 'C','O','R','D', self.nframes(), self.firsttstep(), self.dcdfreq(), ( self.dcdfreq()*self.nframes() ) , self.tstep_size(), 0, 0, self.charm_v(), 84)
         return outdata
     
     
