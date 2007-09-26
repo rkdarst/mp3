@@ -208,13 +208,20 @@ def whatisit(filename):
 def rmsd(frame1, frame2,
                    align = False, center = True):
   """
-  Calculates the RMSD between two conformations.
-  * frame1: array of dimensions [N,3]
-  * frame2: array of dimensions [N,3]
-  * align: True = modify frame2 to be
-  aligned to frame1
-  * center: True = remove average center differences
-  before calculating RMSD
+  Calculates the RMSD between two conformations.  Uses algorithm and notation from
+  Kabsch, Wolfgang, (1976) "A solution of the best rotation to relate two sets of
+  vectors", Acta Crystallographica 32:922
+  
+  Arguments:
+    frame1: array of dimensions [N,3]
+    frame2: array of dimensions [N,3]
+    align: True = modify frame2 to be
+    aligned to frame1 (otherwise frame2 is just copied
+    for the rmsd calculation and left unmodified)
+    center: True = remove average center differences
+    before calculating RMSD (leave this as True if you have not translated the
+    frames so that their centers are the same)
+  
   """
   
   if not numpy.shape(frame1) == numpy.shape(frame2):
