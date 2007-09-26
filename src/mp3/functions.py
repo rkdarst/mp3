@@ -205,8 +205,64 @@ def whatisit(filename):
     return None
     
     
-def rmsd(frame1, frame2):
+def rmsd(frame1, frame2,
+                   align = False, center = True):
+  """
+  Calculates the RMSD between two conformations.
+  * frame1: array of dimensions [N,3]
+  * frame2: array of dimensions [N,3]
+  * align: True = modify frame2 to be
+  aligned to frame1
+  * center: True = remove average center differences
+  before calculating RMSD
+  """
+  
+  if not numpy.shape(frame1) == numpy.shape(frame2):
+    raise "calculate_rmsd: conformations not the same size."
+  elif not len(numpy.shape(frame1)) >= 2:
+    raise "calculate_rmsd: conformations not the correct rank."
+
+  X = frame1.copy()
+  Y = frame2.copy()
+
+  n_vec, vec_size = numpy.shape(X)
+  if center:
+    center1 = sum(X,0) / float(n_vec)
+    center2 = sum(Y,0) / float(n_vec)
+    X -= center1
+    Y -= center2
+    
+  E0 = sum(sum(X * X)) + sum(sum(Y * Y))
+
+  correlation_matrix = numpy.dot(numpy.transpose(Y), X)
+
+  V, S, W_trans = numpy.linalg.svd(correlation_matrix)
+
+  is_reflection = (numpy.linalg.det(V) * numpy.linalg.det(W_trans)) < 0.0
+  if is_reflection:
+    # reflect along smallest principal axis
+    S[-1] = -S[-1]
+
+  rmsd_sq = (E0 - 2. * sum(S)) / float(n_vec)
+  rmsd_sq = max([rmsd_sq, 0.])
+  rmsd = numpy.sqrt(rmsd_sq)
+
+  if align:
+    if is_reflection:
+      V[-1,:] = V[-1,:] * (-1.0)
+    optimal_rotation = numpy.dot(V, W_trans)
+    frame2[:,:] = numpy.dot(Y, optimal_rotation) + center1
+
+  return numpy.sqrt(rmsd)
+
+
+def rmsd_no_align(frame1, frame2):
     """Finds the RMSD between two frames
+
+    NOTE:  NO ALIGNMENT TAKES PLACE HERE.
+    
+    frame2 should be aligned to frame1 using mp3.CordAlign
+    prior to using this function.
 
     """
     ## find the displacement for each coordinate

@@ -165,6 +165,10 @@ class CordAlign(mp3.cord.Cord):
 
     def nextframe(self):
         """Return the next frame after alignment
+
+        Uses algorithm and notation from Kabsch, Wolfgang, (1976) "A solution of the best 
+        rotation to relate two sets of vectors", Acta Crystallographica 32:922
+        
         """
         # extract the next frame, slice it by atoms if necessary.
         frame = self.cord.nextframe()
@@ -182,45 +186,78 @@ class CordAlign(mp3.cord.Cord):
             else:
                 self.aligntoframe = frame[self.atomlist].copy()
             self._align_to_next_frame = False
-            
 
-            
-        # Create a wrapper function to take the msd between the two frames.
-        # This is what is passed to the simplex optimizer.
-        rmsd = lambda vect: mp3.functions.rmsd(self.aligntoframe, \
-                    mp3.functions.cordtransform(self.curframe, move=vect[0:3], rotate=vect[3:6] ))
-        if self.verbose:
-            dispval = 1
-        else:
-            dispval = 0
-        if self.callback:
-            callback = lambda xk:  self.callback(xk, self)
-            # your callback can increment this to figure out what step it is on
-            self.iterstep = 0 
-        else:
-            callback = None
-        if self.minimizer == "scipy:powell":
-            result = scipy.optimize.fmin_powell(rmsd,self.guess,disp=dispval,full_output=1,
-                                                callback=callback)
-            self.iterations = result[3]
-            self.funcalls = result[4]
-        elif self.minimizer == "scipy:simplex":
-            result = scipy.optimize.fmin(rmsd,self.guess,disp=dispval,full_output=1,
-                                         callback=callback)
-            self.iterations = result[2]
-            self.funcalls = result[3]
-        else:
-            sys.stderr.write("ERROR: minimizer must be either scipy:powell or scipy:simplex")
-            sys.exit()
-        self.guess = result[0]
-        self._frame = mp3.functions.cordtransform(frame, move=self.guess[0:3],
-                                                  rotate=self.guess[3:6])
-        if self._saveaverage:
-            self._sum_of_frames += self._frame
-            self._sum_of_frames_count += 1
+        X = self.aligntoframe.copy()
+        Y = self.curframe.copy()
 
+        natoms,ndimensions = numpy.shape(X)
+        
+        center1 = sum(X,0) / float(natoms)
+        center2 = sum(Y,0) / float(natoms)
+        X -= center1
+        Y -= center2
+
+        E0 = sum(sum(X * X)) + sum(sum(Y * Y))
+
+        correlation_matrix = numpy.dot(numpy.transpose(Y), X)
+
+        V, S, W_trans = numpy.linalg.svd(correlation_matrix)
+
+        is_reflection = (numpy.linalg.det(V) * numpy.linalg.det(W_trans)) < 0.0
+        if is_reflection:
+            # reflect along smallest principal axis
+            S[-1] = -S[-1]
+            V[-1,:] = V[-1,:] * (-1.0)
+
+        optimal_rotation = numpy.dot(V, W_trans)
+        self._frame = numpy.dot(frame, optimal_rotation) - center2 + center1
+        
         self.nextframe_end_hook(self)
         return self._frame
+              
+        
+        # UPDATE (JRD, Sept. 2007):  This section of code contained between the #**...*# markers
+        # is not the correct way to align frames for a single protein MD trajectory.  The proper 
+        # method for aligning frames is due to Kabsch:  Kabsch, Wolfgang, (1976) "A solution of 
+        # the best rotation to relate two sets of vectors", Acta Crystallographica 32:922
+        #*******************************************************************************************#
+        # Create a wrapper function to take the msd between the two frames.
+        # This is what is passed to the simplex optimizer.
+        #rmsd = lambda vect: mp3.functions.rmsd(self.aligntoframe, \
+        #            mp3.functions.cordtransform(self.curframe, move=vect[0:3], rotate=vect[3:6] ))
+        #if self.verbose:
+        #    dispval = 1
+        #else:
+        #    dispval = 0
+        #if self.callback:
+        #    callback = lambda xk:  self.callback(xk, self)
+        #    # your callback can increment this to figure out what step it is on
+        #    self.iterstep = 0 
+        #else:
+        #    callback = None
+        #if self.minimizer == "scipy:powell":
+        #    result = scipy.optimize.fmin_powell(rmsd,self.guess,disp=dispval,full_output=1,
+        #                                        ftol=1e-6,callback=callback)
+        #    self.iterations = result[3]
+        #    self.funcalls = result[4]
+        #elif self.minimizer == "scipy:simplex":
+        #    result = scipy.optimize.fmin(rmsd,self.guess,disp=dispval,full_output=1,
+        #                                 callback=callback)
+        #    self.iterations = result[2]
+        #    self.funcalls = result[3]
+        #else:
+        #    sys.stderr.write("ERROR: minimizer must be either scipy:powell or scipy:simplex")
+        #    sys.exit()
+        #self.guess = result[0]
+        #self._frame = mp3.functions.cordtransform(frame, move=self.guess[0:3],
+        #                                          rotate=self.guess[3:6])
+        #if self._saveaverage:
+        #    self._sum_of_frames += self._frame
+        #    self._sum_of_frames_count += 1
+        #
+        #self.nextframe_end_hook(self)
+        #return self._frame
+        #*******************************************************************************************#        
 
     def zero_frame(self):
         """Returns to frame zero.
