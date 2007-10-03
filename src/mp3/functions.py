@@ -260,7 +260,7 @@ def rmsd(frame1, frame2,
     optimal_rotation = numpy.dot(V, W_trans)
     frame2[:,:] = numpy.dot(Y, optimal_rotation) + center1
 
-  return numpy.sqrt(rmsd)
+  return rmsd
 
 
 def rmsd_no_align(frame1, frame2):
