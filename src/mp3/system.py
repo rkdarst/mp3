@@ -124,7 +124,8 @@ class System(labels.Labels):
 
         Use <system>.writepdb() instead.
         """
-        self.output = file(name,"w")
+        self.output = file(name,"a")
+        self.output.write("MODEL\n")        
         if not hasattr(self, "atomlist"):  #self.use_atom_subset == False:
             for atomn in range(0, self.cord.natoms()):
                 self._pdbline(atomn, atomn)
@@ -133,7 +134,7 @@ class System(labels.Labels):
             for atomn in self.atomlist:
                 self._pdbline(atomn, counter)
                 counter += 1
-        self.output.write("END\n")
+        self.output.write("ENDMDL\n")
         self.output.close()
         del self.output
 
