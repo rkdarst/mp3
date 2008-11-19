@@ -92,6 +92,10 @@ class CordPDB(mp3.cord.Cord):
         pdbfo = file(self._pdblist[self._framen], "r")
         while True:
             line = pdbfo.readline()
+            if line[0:6] == "CRYST1":
+                self._boxsize = numpy.array([float(line.split()[1]),
+                                             float(line.split()[2]),
+                                             float(line.split()[3])])
             if line[0:4] == "ATOM":   # we find the first atom line here, but
                                       #don't process it until the next loop.
                 break

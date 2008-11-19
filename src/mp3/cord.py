@@ -34,6 +34,9 @@ class Cord:
     def frame(self):
         return self._frame
 
+    def boxsize(self):
+        return self._boxsize
+
     def firsttstep(self):
         if hasattr(self, "_firsttstep"):
             return self._firsttstep
