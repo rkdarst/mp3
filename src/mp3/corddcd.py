@@ -249,6 +249,9 @@ class CordDCD(mp3.cord.Cord):
             # contians, I'm not trying to make use of it now, but you
             # can extract the data from ._block_a_values if you like.
             self._block_a_values = self._parse_unknown_block("<dddddd")
+            self._boxsize = numpy.array([self._block_a_values[0],
+                                         self._block_a_values[2],
+                                         self._block_a_values[5]])
             #print values
 
         # We don't want to update in-place, that will cause unexpected
